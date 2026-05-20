@@ -25,11 +25,11 @@ def load_json(path: str) -> Dict[str, object]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--frames", type=int, default=DEFAULT_FRAME_COUNT)
-    parser.add_argument(
-        "--output-dir",
-        default="boundary_morph_1_100_frames",
-        help="Directory for per-frame JSON outputs.",
-    )
+    # parser.add_argument(
+    #     "--output-dir",
+    #     default="boundary_morph_1_100_frames",
+    #     help="Directory for per-frame JSON outputs.",
+    # )
     return parser.parse_args()
 
 
@@ -40,14 +40,15 @@ def main() -> None:
         raise ValueError("--frames must be at least 2")
 
     base = load_json("example_genus2_boundary_vertices.json")
-    start = load_json("example_genus2_boundary_vertices_weighted_1_100.json")
-    start_sol = load_json("example_genus2_boundary_vertices_weighted_1_100_solution.json")
+    start = load_json("example_genus2_boundary_vertices_weighted_1_20.json")
+    start_sol = load_json("example_genus2_boundary_vertices_weighted_1_20_solution.json")
+    output_dir = "boundary_morph_1_20_to_1_frames"
 
     start_weights = [float(w) for w in start["edge_weights"]]
     if "edges" not in start:
         raise ValueError("Expected explicit edge list in weighted input.")
 
-    out_dir = Path(args.output_dir)
+    out_dir = Path(output_dir)
     out_dir.mkdir(exist_ok=True)
 
     prev_vertices = [list(v) for v in start_sol["vertices"]]

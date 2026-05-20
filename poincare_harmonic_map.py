@@ -21,6 +21,9 @@ Input JSON schema
   "faces": [[i, j, k], ...],               // optional if "edges" is given
   "edges": [[i, j], ...],                  // optional if "faces" is given
   "edge_weights": [1.0, 2.0, ...],         // optional, defaults to all 1
+  "directed_edge_weights": [[1.0, 1.5], ...],
+                                             // optional gradient weights
+                                             // for edge [i, j]: [at i, at j]
   "fixed": [0, 3, 4],                      // optional, only for root vertices
   "constraints": [                         // optional
     {
@@ -231,6 +234,7 @@ class HarmonicMapSolver:
         )
         if not self.edges:
             raise ValueError("Mesh has no edges.")
+
         edge_weights_raw = data.get("edge_weights")
         if edge_weights_raw is None:
             self.edge_weights = [1.0] * len(self.edges)
@@ -243,6 +247,41 @@ class HarmonicMapSolver:
                     f"{len(self.edges)} edges."
                 )
             self.edge_weights = [float(w) for w in edge_weights_raw]
+
+        directed_edge_weights_raw = data.get("directed_edge_weights")
+        if directed_edge_weights_raw is None:
+            self.directed_edge_weights = [
+                (weight, weight) for weight in self.edge_weights
+            ]
+            self.uses_directed_edge_weights = False
+        else:
+            if not isinstance(directed_edge_weights_raw, list):
+                raise ValueError(
+                    "'directed_edge_weights' must be a list if provided."
+                )
+            if len(directed_edge_weights_raw) != len(self.edges):
+                raise ValueError(
+                    "'directed_edge_weights' has length "
+                    f"{len(directed_edge_weights_raw)} but there are "
+                    f"{len(self.edges)} edges."
+                )
+            self.directed_edge_weights = []
+            for edge, weights in zip(self.edges, directed_edge_weights_raw):
+                if not isinstance(weights, list) or len(weights) != 2:
+                    raise ValueError(
+                        "Each directed edge weight must be a two-item list "
+                        f"[weight_at_i, weight_at_j] for edge {edge}, got "
+                        f"{weights!r}."
+                    )
+                self.directed_edge_weights.append(
+                    (float(weights[0]), float(weights[1]))
+                )
+            self.uses_directed_edge_weights = True
+
+        self.edge_energy_weights = [
+            0.5 * (weight_i + weight_j)
+            for weight_i, weight_j in self.directed_edge_weights
+        ]
 
         self.fixed: Set[int] = set(int(v) for v in data.get("fixed", []))
         self.iterations = int(data.get("iterations", 200))
@@ -350,13 +389,17 @@ class HarmonicMapSolver:
     ) -> Tuple[float, List[complex]]:
         energy = 0.0
         grad = [0.0j for _ in range(self.n)]
-        for (i, j), weight in zip(self.edges, self.edge_weights):
+        for (i, j), energy_weight, (weight_i, weight_j) in zip(
+            self.edges,
+            self.edge_energy_weights,
+            self.directed_edge_weights,
+        ):
             zi = positions[i]
             zj = positions[j]
             d = hyperbolic_distance(zi, zj)
-            energy += 0.5 * weight * d * d
-            grad[i] -= weight * log_map(zi, zj)
-            grad[j] -= weight * log_map(zj, zi)
+            energy += 0.5 * energy_weight * d * d
+            grad[i] -= weight_i * log_map(zi, zj)
+            grad[j] -= weight_j * log_map(zj, zi)
         return energy, grad
 
     def _pull_gradient_to_roots(
@@ -450,6 +493,11 @@ class HarmonicMapSolver:
             "energy_history": self.energy_history,
             "edges": [list(edge) for edge in self.edges],
             "edge_weights": self.edge_weights,
+            "directed_edge_weights": [
+                [weight_i, weight_j]
+                for weight_i, weight_j in self.directed_edge_weights
+            ],
+            "uses_directed_edge_weights": self.uses_directed_edge_weights,
             "roots": self.roots,
             "fixed": sorted(self.fixed),
         }
