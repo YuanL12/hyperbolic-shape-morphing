@@ -343,6 +343,7 @@ class DirectedEdgeWeightCalculator:
             numerator = positive_tan_half_angle(prev_alpha) + positive_tan_half_angle(
                 next_alpha
             )
+            numerator_share = numerator / len(group_items)
             for radius, occurrence in group_items:
                 hyperbolic_radius = 2.0 * math.atanh(min(radius, 1.0 - 1e-15))
                 denominator = math.sinh(hyperbolic_radius)
@@ -350,7 +351,7 @@ class DirectedEdgeWeightCalculator:
                     raise ValueError(
                         f"Neighbor {occurrence.neighbor} is too close to center {center}."
                     )
-                occurrence_weights.append((occurrence, numerator / denominator))
+                occurrence_weights.append((occurrence, numerator_share / denominator))
 
         if normalization == "normalized":
             weight_sum = sum(weight for _, weight in occurrence_weights)

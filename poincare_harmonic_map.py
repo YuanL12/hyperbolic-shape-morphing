@@ -24,6 +24,10 @@ Input JSON schema
   "directed_edge_weights": [[1.0, 1.5], ...],
                                              // optional gradient weights
                                              // for edge [i, j]: [at i, at j]
+  "directed_edge_weight_operator": "mean_value",
+                                             // optional: "mean_value" or "energy"
+                                             // defaults to "mean_value" when
+                                             // directed weights are provided
   "fixed": [0, 3, 4],                      // optional, only for root vertices
   "constraints": [                         // optional
     {
@@ -278,6 +282,16 @@ class HarmonicMapSolver:
                 )
             self.uses_directed_edge_weights = True
 
+        default_operator = "mean_value" if self.uses_directed_edge_weights else "energy"
+        self.directed_edge_weight_operator = str(
+            data.get("directed_edge_weight_operator", default_operator)
+        )
+        if self.directed_edge_weight_operator not in {"energy", "mean_value"}:
+            raise ValueError(
+                "'directed_edge_weight_operator' must be either 'energy' or "
+                f"'mean_value', got {self.directed_edge_weight_operator!r}."
+            )
+
         self.edge_energy_weights = [
             0.5 * (weight_i + weight_j)
             for weight_i, weight_j in self.directed_edge_weights
@@ -397,9 +411,13 @@ class HarmonicMapSolver:
             zi = positions[i]
             zj = positions[j]
             d = hyperbolic_distance(zi, zj)
+            if self.directed_edge_weight_operator == "mean_value":
+                gradient_scale = math.sinh(d) / d if d > EPS else 1.0
+            else:
+                gradient_scale = 1.0
             energy += 0.5 * energy_weight * d * d
-            grad[i] -= weight_i * log_map(zi, zj)
-            grad[j] -= weight_j * log_map(zj, zi)
+            grad[i] -= weight_i * gradient_scale * log_map(zi, zj)
+            grad[j] -= weight_j * gradient_scale * log_map(zj, zi)
         return energy, grad
 
     def _pull_gradient_to_roots(
@@ -498,6 +516,7 @@ class HarmonicMapSolver:
                 for weight_i, weight_j in self.directed_edge_weights
             ],
             "uses_directed_edge_weights": self.uses_directed_edge_weights,
+            "directed_edge_weight_operator": self.directed_edge_weight_operator,
             "roots": self.roots,
             "fixed": sorted(self.fixed),
         }

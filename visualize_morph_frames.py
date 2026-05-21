@@ -151,22 +151,97 @@ function project(p) {{
   ];
 }}
 
-function edgeColor(weight, maxWeight) {{
-  if (!Number.isFinite(weight) || maxWeight <= 1) return "rgba(55, 65, 81, 0.32)";
-  const t = Math.max(0, Math.min(1, (weight - 1) / (maxWeight - 1)));
-  const red = Math.round(80 + 175 * t);
-  const green = Math.round(92 - 42 * t);
-  const blue = Math.round(108 - 68 * t);
-  return `rgba(${{red}}, ${{green}}, ${{blue}}, ${{0.28 + 0.52 * t}})`;
+function norm2(p) {{
+  return p[0] * p[0] + p[1] * p[1];
+}}
+
+function normalizeAngle(delta) {{
+  while (delta <= -Math.PI) delta += Math.PI * 2;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  return delta;
+}}
+
+function geodesicPoints(a, b) {{
+  const det = a[0] * b[1] - a[1] * b[0];
+  const samples = 36;
+
+  if (Math.abs(det) < 1e-10) {{
+    return [a, b];
+  }}
+
+  // Poincare disk geodesics are circles orthogonal to the unit circle.
+  // Their Euclidean center c satisfies 2 c.p = |p|^2 + 1 for both endpoints.
+  const rhsA = (norm2(a) + 1) * 0.5;
+  const rhsB = (norm2(b) + 1) * 0.5;
+  const center = [
+    (rhsA * b[1] - rhsB * a[1]) / det,
+    (a[0] * rhsB - b[0] * rhsA) / det
+  ];
+  const radius = Math.hypot(a[0] - center[0], a[1] - center[1]);
+  if (!Number.isFinite(radius) || radius <= 1e-10) {{
+    return [a, b];
+  }}
+
+  const start = Math.atan2(a[1] - center[1], a[0] - center[0]);
+  const end = Math.atan2(b[1] - center[1], b[0] - center[0]);
+  let delta = normalizeAngle(end - start);
+
+  const midShort = [
+    center[0] + radius * Math.cos(start + delta * 0.5),
+    center[1] + radius * Math.sin(start + delta * 0.5)
+  ];
+  if (norm2(midShort) > 1 + 1e-7) {{
+    delta += delta > 0 ? -Math.PI * 2 : Math.PI * 2;
+  }}
+
+  const points = [];
+  for (let k = 0; k <= samples; k++) {{
+    const t = k / samples;
+    const angle = start + delta * t;
+    points.push([
+      center[0] + radius * Math.cos(angle),
+      center[1] + radius * Math.sin(angle)
+    ]);
+  }}
+  return points;
+}}
+
+function drawFundamentalDomain(vertices, fixed) {{
+  if (!fixed || fixed.length < 3) {{
+    return;
+  }}
+
+  ctx.save();
+  ctx.setLineDash([8, 7]);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2;
+
+  for (let k = 0; k < fixed.length; k++) {{
+    const i = fixed[k];
+    const j = fixed[(k + 1) % fixed.length];
+    if (!vertices[i] || !vertices[j]) {{
+      continue;
+    }}
+    const points = geodesicPoints(vertices[i], vertices[j]).map(project);
+    ctx.beginPath();
+    ctx.moveTo(points[0][0], points[0][1]);
+    for (let p = 1; p < points.length; p++) {{
+      ctx.lineTo(points[p][0], points[p][1]);
+    }}
+    ctx.stroke();
+  }}
+
+  ctx.restore();
 }}
 
 function draw(index) {{
   const frame = frames[index];
   const vertices = frame.vertices;
   const edges = frame.edges;
-  const weights = frame.edge_weights || [];
-  const fixed = new Set(frame.fixed || []);
-  const maxWeight = Math.max(1, ...weights);
+  const fixedList = frame.fixed || [];
+  const fixed = new Set(fixedList);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -181,16 +256,20 @@ function draw(index) {{
   ctx.lineWidth = 2;
   ctx.stroke();
 
+  drawFundamentalDomain(vertices, fixedList);
+
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#138a2e";
+  ctx.lineWidth = 1.7;
   for (let e = 0; e < edges.length; e++) {{
     const [i, j] = edges[e];
-    const a = project(vertices[i]);
-    const b = project(vertices[j]);
+    const points = geodesicPoints(vertices[i], vertices[j]).map(project);
     ctx.beginPath();
-    ctx.moveTo(a[0], a[1]);
-    ctx.lineTo(b[0], b[1]);
-    ctx.strokeStyle = edgeColor(weights[e], maxWeight);
-    ctx.lineWidth = 0.8 + 1.8 * Math.min(1, ((weights[e] || 1) - 1) / Math.max(1, maxWeight - 1));
+    ctx.moveTo(points[0][0], points[0][1]);
+    for (let k = 1; k < points.length; k++) {{
+      ctx.lineTo(points[k][0], points[k][1]);
+    }}
     ctx.stroke();
   }}
 
