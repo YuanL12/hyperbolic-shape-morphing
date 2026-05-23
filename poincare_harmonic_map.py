@@ -218,6 +218,10 @@ def build_edges(
 
 class HarmonicMapSolver:
     def __init__(self, data: Dict[str, object]) -> None:
+        self.input_faces = data.get("faces")
+        self.input_constraints = data.get("constraints", [])
+        self.input_metadata = data.get("metadata", {})
+
         vertices_raw = data.get("vertices")
         if not isinstance(vertices_raw, list) or not vertices_raw:
             raise ValueError("Input JSON needs a non-empty 'vertices' list.")
@@ -301,6 +305,27 @@ class HarmonicMapSolver:
         self.iterations = int(data.get("iterations", 200))
         self.step_size = float(data.get("step_size", 0.2))
         self.tolerance = float(data.get("tolerance", 1e-8))
+        self.line_search_objective = str(
+            data.get(
+                "line_search_objective",
+                "gradient_norm"
+                if self.directed_edge_weight_operator == "mean_value"
+                else "energy",
+            )
+        )
+        if self.line_search_objective not in {"energy", "gradient_norm", "none"}:
+            raise ValueError(
+                "'line_search_objective' must be 'energy', 'gradient_norm', or "
+                f"'none', got {self.line_search_objective!r}."
+            )
+        self.convergence_criterion = str(
+            data.get("convergence_criterion", "gradient_norm")
+        )
+        if self.convergence_criterion not in {"gradient_norm", "relative_step"}:
+            raise ValueError(
+                "'convergence_criterion' must be either 'gradient_norm' or "
+                f"'relative_step', got {self.convergence_criterion!r}."
+            )
 
         constraints_raw = data.get("constraints", [])
         if not isinstance(constraints_raw, list):
@@ -452,21 +477,29 @@ class HarmonicMapSolver:
         # free roots are the roots that are not fixed
         free_roots = [root for root in self.roots if root not in self.fixed]
 
+        def mean_free_grad_norm(
+            positions: Sequence[complex],
+            root_grad: Dict[int, complex],
+        ) -> float:
+            if not free_roots:
+                return 0.0
+            grad_norm_sq = 0.0
+            for root in free_roots:
+                grad_norm_sq += tangent_norm(positions[root], root_grad[root]) ** 2
+            return math.sqrt(grad_norm_sq / len(free_roots))
+
         for _ in range(self.iterations):
             positions = self._resolve_all_positions(root_positions)
             energy, raw_grad = self.energy_and_raw_gradient(positions)
             root_grad = self._pull_gradient_to_roots(positions, raw_grad)
             self.energy_history.append(energy)
 
-            if free_roots:
-                grad_norm_sq = 0.0
-                for root in free_roots:
-                    grad_norm_sq += tangent_norm(positions[root], root_grad[root]) ** 2
-                last_grad_norm = math.sqrt(grad_norm_sq / len(free_roots))
-            else:
-                last_grad_norm = 0.0
+            last_grad_norm = mean_free_grad_norm(positions, root_grad)
 
-            if last_grad_norm < self.tolerance:
+            if (
+                self.convergence_criterion == "gradient_norm"
+                and last_grad_norm < self.tolerance
+            ):
                 root_positions = [positions[v] for v in self.roots]
                 break
 
@@ -483,7 +516,27 @@ class HarmonicMapSolver:
 
                 candidate_positions = self._resolve_all_positions(candidate_roots)
                 candidate_energy, _ = self.energy_and_raw_gradient(candidate_positions)
-                if candidate_energy <= energy:
+                if self.line_search_objective == "none":
+                    candidate_objective = 0.0
+                    current_objective = 0.0
+                elif self.line_search_objective == "gradient_norm":
+                    _, candidate_raw_grad = self.energy_and_raw_gradient(
+                        candidate_positions
+                    )
+                    candidate_root_grad = self._pull_gradient_to_roots(
+                        candidate_positions,
+                        candidate_raw_grad,
+                    )
+                    candidate_objective = mean_free_grad_norm(
+                        candidate_positions,
+                        candidate_root_grad,
+                    )
+                    current_objective = last_grad_norm
+                else:
+                    candidate_objective = candidate_energy
+                    current_objective = energy
+
+                if candidate_objective <= current_objective:
                     root_positions = candidate_roots
                     max_step = self._max_hyperbolic_step(positions, candidate_positions)
                     accepted = True
@@ -517,8 +570,13 @@ class HarmonicMapSolver:
             ],
             "uses_directed_edge_weights": self.uses_directed_edge_weights,
             "directed_edge_weight_operator": self.directed_edge_weight_operator,
+            "line_search_objective": self.line_search_objective,
+            "convergence_criterion": self.convergence_criterion,
             "roots": self.roots,
             "fixed": sorted(self.fixed),
+            "constraints": self.input_constraints,
+            "metadata": self.input_metadata,
+            **({"faces": self.input_faces} if self.input_faces is not None else {}),
         }
 
 
@@ -543,12 +601,47 @@ def parse_args() -> argparse.Namespace:
         "--output",
         help="Optional output JSON path. Defaults to printing a short summary only.",
     )
+    parser.add_argument(
+        "--iterations",
+        type=int,
+        help="Override the input JSON iteration count.",
+    )
+    parser.add_argument(
+        "--step-size",
+        type=float,
+        help="Override the input JSON gradient descent step size.",
+    )
+    parser.add_argument(
+        "--tolerance",
+        type=float,
+        help="Override the input JSON convergence tolerance.",
+    )
+    parser.add_argument(
+        "--line-search-objective",
+        choices=("energy", "gradient_norm", "none"),
+        help="Override the line-search objective.",
+    )
+    parser.add_argument(
+        "--convergence-criterion",
+        choices=("gradient_norm", "relative_step"),
+        help="Override the convergence criterion.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     data = load_json(args.input)
+    if args.iterations is not None:
+        data["iterations"] = args.iterations
+    if args.step_size is not None:
+        data["step_size"] = args.step_size
+    if args.tolerance is not None:
+        data["tolerance"] = args.tolerance
+    if args.line_search_objective is not None:
+        data["line_search_objective"] = args.line_search_objective
+    if args.convergence_criterion is not None:
+        data["convergence_criterion"] = args.convergence_criterion
     solver = HarmonicMapSolver(data)
     result = solver.solve()
 

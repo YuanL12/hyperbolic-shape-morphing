@@ -110,12 +110,16 @@ class DirectedEdgeWeightCalculator:
         data: Mapping[str, object],
         positions: Optional[Sequence[PointInput]] = None,
         normalization: NormalizationMode = "unnormalized",
+        low_valence_policy: str = "error",
     ) -> None:
         if normalization not in {"unnormalized", "normalized"}:
             raise ValueError(
                 "normalization must be either 'unnormalized' or 'normalized'."
             )
+        if low_valence_policy not in {"error", "unit"}:
+            raise ValueError("low_valence_policy must be either 'error' or 'unit'.")
         self.normalization = normalization
+        self.low_valence_policy = low_valence_policy
 
         vertices_raw = data.get("vertices")
         if not isinstance(vertices_raw, list) or not vertices_raw:
@@ -292,10 +296,16 @@ class DirectedEdgeWeightCalculator:
         center_position = self.positions[center]
         occurrences = self.attached_star(center)
         if len(occurrences) < 3:
-            raise ValueError(
-                f"Attached star for vertex {center} has valence {len(occurrences)}; "
-                "need at least 3 neighbor occurrences."
-            )
+            if self.low_valence_policy == "error":
+                raise ValueError(
+                    f"Attached star for vertex {center} has valence {len(occurrences)}; "
+                    "need at least 3 neighbor occurrences."
+                )
+            return {
+                (center, occurrence.neighbor): 1.0
+                for occurrence in occurrences
+                if occurrence.source_center == center
+            }
 
         polar_raw: List[Tuple[float, float, StarOccurrence]] = []
         for occurrence in occurrences:

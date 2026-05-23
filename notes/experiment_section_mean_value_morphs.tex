@@ -1,0 +1,499 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amsthm, amssymb, fullpage, amscd}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{eucal}
+\usepackage{thmtools}
+\usepackage{float}
+\usepackage{thm-restate}
+\usepackage{tikz-cd, pgf, tikz}
+\usepackage{geometry}\geometry{margin=1in}
+\usepackage[colorlinks, bookmarks=true]{hyperref}
+\hypersetup{
+	colorlinks,
+	citecolor=blue,
+	linkcolor=blue,
+	urlcolor=blue}
+\usepackage{cleveref, autonum}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage[nottoc]{tocbibind}
+\usepackage[noadjust]{cite}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{bm, bbm}
+\usepackage{mathrsfs}
+\usepackage{comment}
+\usepackage{array}
+\usepackage{latexsym}
+\usepackage{stmaryrd}
+\usepackage{commath,enumitem,chngcntr}
+\usepackage{indentfirst, hyperref}
+\usepackage[titletoc,toc,title]{appendix}
+\usepackage{pst-node}
+\usepackage{yhmath}
+\usepackage{appendix}
+\usepackage[inkscapelatex=false]{svg}
+
+\usepackage{faktor}
+% \mathtoolsset{showonlyrefs}
+
+\usepackage{hyperref}
+\usepackage{svg}
+
+\setlist{itemsep=3pt plus 1pt minus 1pt}
+
+\usetikzlibrary{arrows,calc,positioning}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\renewcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\newcommand{\dmo}{\DeclareMathOperator}
+\dmo{\Id}{Id}
+\dmo{\pt}{pt}
+\dmo{\ab}{ab}
+\dmo{\GL}{GL}
+\dmo{\SO}{SO}
+\dmo{\SU}{SU}
+\dmo{\SL}{SL}
+\dmo{\PSL}{PSL}
+\dmo{\im}{Im}
+\dmo{\re}{Re}
+\dmo{\Ad}{Ad}
+\dmo{\ad}{ad}
+\dmo{\tr}{tr}
+\dmo{\Log}{Log}
+\dmo{\Homeo}{Homeo}
+\dmo{\Vol}{Vol}
+\dmo{\supp}{supp}
+\dmo{\Isom}{Isom}
+\dmo{\Hom}{Hom}
+\dmo{\Ext}{Ext}
+\dmo{\Tor}{Tor}
+\dmo{\ind}{ind}
+\dmo{\PP}{\mathbf{P}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\C}{\mathbb C}
+\newcommand{\R}{\mathbb R}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\N}{\mathbb N}
+\newcommand{\T}{\mathcal T}
+\newcommand{\D}{\mathbb D}
+\renewcommand{\H}{\mathbb H}
+
+\newcommand{\ra}{\rightarrow}
+\newcommand{\ep}{\epsilon}
+\newcommand{\de}{\delta}
+\newcommand{\al}{\alpha}
+\newcommand{\be}{\beta}
+\newcommand{\til}{\tilde}
+\newcommand{\vn}{\varnothing}
+\newcommand{\ga}{\gamma}
+\newcommand{\Si}{\Sigma}
+\newcommand{\De}{\Delta}
+\newcommand{\si}{\sigma}
+\newcommand{\pa}{\partial}
+\newcommand{\ti}{\times}
+\newcommand{\ld}{\ldots}
+\newcommand{\cd}{\cdots}
+\newcommand{\sbs}{\subset}
+\newcommand{\xra}{\xrightarrow}
+\newcommand{\hra}{\hookrightarrow}
+\newcommand{\Arg}{\mathrm {Arg}}
+\renewcommand{\tr}{\mathrm {tr}}
+\newcommand{\lan}{\langle}
+\newcommand{\ran}{\rangle}
+\newcommand{\from}{\colon}
+\newcommand{\parallelogram}{%
+  \tikz[baseline=-0.5ex, scale=0.15]{
+    \draw (0,-0.6) -- (2,-0.6) -- (3,1.4) -- (1,1.4) -- cycle;
+  }%
+}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{problem}[theorem]{Problem}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{definitions}[theorem]{Definitions}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{examples}[theorem]{Examples}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{notations}[theorem]{Notations}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{remarks}[theorem]{Remarks}
+% \newtheorem{warning}[theorem]{Warning}
+
+\makeatletter
+\let\c@equation\c@theorem
+\makeatother
+\numberwithin{equation}{section}
+
+\newcommand\numberthis{\refstepcounter{equation}\tag{\theequation}}
+
+\usepackage{lipsum}
+% ADD THE FOLLOWING COUPLE LINES INTO YOUR PREAMBLE
+\let\OLDthebibliography\thebibliography
+\renewcommand\thebibliography[1]{
+	\OLDthebibliography{#1}
+	\setlength{\parskip}{2pt}
+	\setlength{\itemsep}{0pt plus 0.3ex}
+}
+
+\newcommand\mymark{\indent $\triangleright$\ \ }
+\def\gl{\lambda}
+
+\author{Yanwen Luo, Yuan Luo}
+
+\title{Morphing Graphs on High Genus Surfaces}
+\date{May 2026}
+
+\begin{document}
+
+\maketitle
+\providecommand{\MorphFigurePath}{pictures}
+\svgpath{{\MorphFigurePath/}}
+
+\section{Experiments}
+\label{sec:experiments}
+
+We evaluate the proposed hyperbolic morphing procedure on four cut-open
+surface embeddings: a genus--2 triangulation, a genus--2 cellular graph with
+quadrilateral and pentagonal faces, a genus--3 triangulation, and a genus--3
+cellular graph with quadrilateral and pentagonal faces.  In all cases the
+embedding is represented in the Poincare disk, with the side-pairing Mobius
+transformations encoding the quotient surface.  The genus--2 examples use a
+regular octagonal fundamental domain for the Bolza surface, while the genus--3
+examples use a regular 14-gonal fundamental domain for the Klein quartic.
+
+The combinatorial sizes of the four test cases are listed in
+Table~\ref{tab:morph-topology-counts}.  We omit the construction details of the
+initial planar graphs here; for the purposes of the morphing experiment, the
+important distinction is whether the input is a triangulation or a cellular
+decomposition with higher-order faces.
+
+\begin{table}[t]
+\centering
+\caption{Topology of the four morphing experiments.}
+\label{tab:morph-topology-counts}
+\begin{tabular}{lrrrrrr}
+\hline
+Example & Genus & Vertices & Edges & Triangles & Quads & Pentagons \\
+\hline
+Triangulation & 2 & 190 & 527 & 338 & 0 & 0 \\
+Cells & 2 & 190 & 490 & 270 & 25 & 6 \\
+Triangulation & 3 & 250 & 677 & 428 & 0 & 0 \\
+Cells & 3 & 250 & 557 & 208 & 80 & 20 \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Endpoint embeddings.}
+For each graph we first compute two endpoint embeddings by minimizing a
+hyperbolic Dirichlet energy.  The source endpoint uses scalar edge weights
+$w_e \equiv 1$.  The target endpoint uses a non-uniform scalar weight field in
+which the first half of the edge list has weight $10$, and the remaining half
+has weight $1$.  Both endpoints are computed with the hyperbolic harmonic-map
+solver in the Poincare disk, subject to the same fixed fundamental-domain
+corner vertices and the same side-pairing Mobius constraints.
+
+We write a vertex position as a complex number $z_i \in \D$.  The Poincare disk
+metric is conformal to the Euclidean metric with factor
+\[
+    \lambda_z = \frac{2}{1-|z|^2}.
+\]
+For $x,y\in \D$, Mobius addition is
+\[
+    x \oplus y = \frac{x+y}{1+\overline{x}y},
+\]
+and the hyperbolic distance is
+\[
+    d_{\D}(x,y) =
+    2 \operatorname{arctanh}\left|(-x)\oplus y\right|.
+\]
+The logarithm and exponential maps used in the gradient descent are
+\[
+    \log_x(y)
+    =
+    \frac{2}{\lambda_x}
+    \frac{\operatorname{arctanh}|\delta|}{|\delta|}
+    \delta,
+    \qquad
+    \delta=(-x)\oplus y,
+\]
+with $\log_x(x)=0$, and
+\[
+    \exp_x(v)
+    =
+    x \oplus
+    \left(
+        \tanh\left(\frac{\lambda_x |v|}{2}\right)
+        \frac{v}{|v|}
+    \right),
+\]
+with $\exp_x(0)=x$.
+
+For scalar endpoint weights, the energy is
+\[
+    E(z)=\frac12\sum_{\{i,j\}\in E} w_{ij}\,d_{\D}(z_i,z_j)^2.
+\]
+The Riemannian gradient contribution at the two endpoints of an edge is
+\[
+    \nabla_{z_i}E_{\{i,j\}}=-w_{ij}\log_{z_i}(z_j),
+    \qquad
+    \nabla_{z_j}E_{\{i,j\}}=-w_{ij}\log_{z_j}(z_i).
+\]
+For directed mean-value weights, the morphing solve uses directed coefficients
+$\omega_{ij}$ and $\omega_{ji}$ in the gradient.  The scalar coefficient used
+in the displayed Dirichlet energy is the symmetrized value
+\[
+    a_{ij}=\frac{\omega_{ij}+\omega_{ji}}{2}.
+\]
+With $d_{ij}=d_{\D}(z_i,z_j)$, the edge contribution is
+\[
+    \nabla_{z_i}E_{\{i,j\}}
+    =
+    -\omega_{ij}\frac{\sinh d_{ij}}{d_{ij}}\log_{z_i}(z_j),
+    \qquad
+    \nabla_{z_j}E_{\{i,j\}}
+    =
+    -\omega_{ji}\frac{\sinh d_{ij}}{d_{ij}}\log_{z_j}(z_i),
+\]
+where $\sinh d_{ij}/d_{ij}$ is set to $1$ when $d_{ij}=0$.  The update of each
+free root vertex is performed by the exponential map,
+\[
+    z_i^{(m+1)}
+    =
+    \exp_{z_i^{(m)}}\left(-\eta\,\nabla_{z_i}E\right),
+\]
+while fixed corner vertices remain fixed.  Slave vertices on paired sides are
+not independently updated; after each root update, their positions are resolved
+from the side-pairing Mobius transformations.  If a constrained vertex is
+$z_s=M_{s\leftarrow r}(z_r)$, its gradient contribution is pulled back to the
+root vertex through the differential of $M_{s\leftarrow r}$ before the root
+update is applied.
+
+\paragraph{Hyperbolic convexity check.}
+For the cellular examples, the higher-order faces must remain geodesically
+convex for mean-value coordinates to be well-defined.  This is checked with
+tangent directions of Poincare geodesics, not Euclidean chord angles.  Let
+$p=(x_p,y_p)$ and $q=(x_q,y_q)$ be two adjacent vertices.  If
+$x_p y_q-y_p x_q=0$, the geodesic is a Euclidean diameter and the tangent at
+$p$ toward $q$ is
+\[
+    \tau_{p\to q}
+    =
+    \frac{q-p}{\|q-p\|}.
+\]
+Otherwise the geodesic is the Euclidean circle orthogonal to $\partial\D$ and
+passing through $p$ and $q$.  Its center $c=(c_x,c_y)$ is found by solving
+\[
+    2c\cdot p=\|p\|^2+1,\qquad
+    2c\cdot q=\|q\|^2+1,
+\]
+equivalently, for $\Delta=x_p y_q-y_p x_q$,
+\[
+    c_x =
+    \frac{(\|p\|^2+1)y_q-(\|q\|^2+1)y_p}{2\Delta},
+    \qquad
+    c_y =
+    \frac{x_p(\|q\|^2+1)-x_q(\|p\|^2+1)}{2\Delta}.
+\]
+The tangent line is perpendicular to the radius $p-c$, so the two possible
+unit tangents are
+\[
+    \pm\frac{(-(y_p-c_y),\,x_p-c_x)}{\|p-c\|}.
+\]
+We choose the sign for which $p+\epsilon\tau_{p\to q}$ is closer to $q$ than
+$p-\epsilon\tau_{p\to q}$ for a small $\epsilon>0$.  For a face
+$(v_0,\ldots,v_{\ell-1})$, the signed turn at $v_k$ is
+\[
+    \theta_k =
+    \operatorname{atan2}
+    \left(
+        \det(-\tau_{v_k\to v_{k-1}},\,\tau_{v_k\to v_{k+1}}),
+        \left\langle -\tau_{v_k\to v_{k-1}},\,\tau_{v_k\to v_{k+1}}\right\rangle
+    \right).
+\]
+The face is accepted as geodesically convex when all $\theta_k$ have the face
+orientation sign.  The minimized cellular endpoints used below passed this
+tangent-angle convexity test and had no Poincare-geodesic edge crossings.
+
+\paragraph{Mean-value directed weights.}
+After computing the two endpoint convex embeddings, we discard the scalar
+endpoint weights and recompute directed mean-value edge weights.  Around a
+center vertex $i$, all neighbors are first attached into the same local star
+using the side-pairing Mobius transformations.  This is essential at polygon
+corners: a corner can appear to have low valence in the cut domain, but its
+quotient-surface star includes copies attached across paired sides.
+
+The star is moved by a disk isometry sending $z_i$ to the origin.  For a
+neighbor occurrence $j$, let
+\[
+    u_j=\frac{z_j-z_i}{1-\overline{z_i}z_j}
+    =
+    r_j e^{\sqrt{-1}\phi_j},
+    \qquad
+    \rho_j=2\operatorname{arctanh} r_j.
+\]
+After sorting the neighbor occurrences by angle, let $\alpha_j^{-}$ and
+$\alpha_j^{+}$ be the adjacent angular gaps before and after occurrence $j$.
+The unnormalized hyperbolic mean-value directed weight is
+\[
+    \omega_{ij}
+    =
+    \frac{
+        \tan(\alpha_j^{-}/2)+\tan(\alpha_j^{+}/2)
+    }{
+        \sinh \rho_j
+    }.
+\]
+When multiple attached occurrences have the same angular direction, the
+numerator is shared equally among them.
+
+\begin{figure}[t]
+\centering
+\fbox{
+\begin{minipage}{0.94\linewidth}
+\textbf{Algorithm 1: directed mean-value weights on the quotient star.}
+\begin{enumerate}[leftmargin=1.5em]
+\item For each root vertex $i$, collect all incident neighbor occurrences in
+the quotient-surface star.  If $i$ lies on the cut boundary, include the
+copies attached by the side-pairing Mobius transformations.
+\item Move the center $z_i$ to the origin by $u=(z-z_i)/(1-\overline{z_i}z)$.
+Record the polar coordinates $u_j=r_j e^{\sqrt{-1}\phi_j}$ for each attached
+neighbor occurrence.
+\item Sort the occurrences by angle $\phi_j$ and compute the adjacent angular
+gaps $\alpha_j^{-}$ and $\alpha_j^{+}$.
+\item Assign the directed weight
+$\omega_{ij}=(\tan(\alpha_j^{-}/2)+\tan(\alpha_j^{+}/2))/\sinh\rho_j$, where
+$\rho_j=2\operatorname{arctanh}r_j$.  If several occurrences share the same
+direction, split the numerator equally among them.
+\item Repeat the same computation at every root vertex, producing directed
+weights $\omega_{ij}$ and $\omega_{ji}$ on each undirected edge $\{i,j\}$.
+\end{enumerate}
+\end{minipage}}
+\caption{Computation of the directed mean-value weights used at the source and
+target endpoint embeddings.}
+\label{alg:directed-mean-value-weights}
+\end{figure}
+
+\paragraph{Morphing solve.}
+Let $\omega_{ij}^{0}$ denote the directed mean-value weight from vertex $i$ to
+vertex $j$ in the all-one endpoint embedding, and let $\omega_{ij}^{1}$ denote
+the corresponding directed weight in the half-10 endpoint embedding.  For
+frame $k=0,\ldots,24$, with $t_k=k/24$, we interpolate the directed weights
+linearly,
+\[
+    \omega_{ij}(t_k)
+    =
+    (1-t_k)\,\omega_{ij}^{0}
+    +
+    t_k\,\omega_{ij}^{1}.
+\]
+The scalar edge coefficient recorded for the frame energy is
+$a_{ij}(t_k)=(\omega_{ij}(t_k)+\omega_{ji}(t_k))/2$.
+Each frame is obtained by solving the hyperbolic harmonic-map equations with
+these interpolated directed weights.  The previous frame is used as the initial
+iterate for the next frame.
+
+\begin{figure}[t]
+\centering
+\fbox{
+\begin{minipage}{0.94\linewidth}
+\textbf{Algorithm 2: mean-value-coordinate morphing.}
+\begin{enumerate}[leftmargin=1.5em]
+\item Compute the source endpoint embedding $Z^0$ by minimizing the scalar
+Dirichlet energy with $w_e\equiv 1$.
+\item Compute the target endpoint embedding $Z^1$ by minimizing the scalar
+Dirichlet energy with $w_e=10$ on the first half of the edge list and $w_e=1$
+on the remaining half.
+\item Use Algorithm~\ref{alg:directed-mean-value-weights} to compute directed
+weights $\omega^0$ from $Z^0$ and $\omega^1$ from $Z^1$.
+\item Set the initial iterate for frame $0$ to $Z^0$.
+\item For $k=0,\ldots,24$, set $t_k=k/24$ and
+$\omega_{ij}(t_k)=(1-t_k)\omega_{ij}^{0}+t_k\omega_{ij}^{1}$.
+\item Set $a_{ij}(t_k)=(\omega_{ij}(t_k)+\omega_{ji}(t_k))/2$ for the scalar
+energy coefficient on edge $\{i,j\}$.
+\item Starting from the previous frame, repeatedly compute the directed
+gradient, pull constrained-vertex gradient contributions back to their root
+vertices, and update each free root by
+$z_i\leftarrow\exp_{z_i}(-\eta\nabla_{z_i}E)$.
+\item Stop the frame solve when the maximum hyperbolic displacement between
+successive iterates is below the prescribed tolerance, i.e.
+$\max_i d_{\D}(z_i^{(m+1)},z_i^{(m)})<\varepsilon$.
+\item Resolve the constrained side vertices by their Mobius transformations and
+write the resulting embedding as frame $k$.
+\end{enumerate}
+\end{minipage}}
+\caption{Frame-by-frame morphing with interpolated directed mean-value
+weights.}
+\label{alg:mean-value-morph}
+\end{figure}
+
+All four morphs were generated with 25 frames.  Since showing every frame would be redundant, the
+figures below show the evenly spaced frame indices
+\[
+    0,\,3,\,6,\,9,\,12,\,15,\,18,\,21,\,24 .
+\]
+Green curves are the graph edges, the dashed black curve is the fundamental-domain boundary, red vertices are the fixed polygon corners, and orange and green faces indicate quadrilateral and pentagonal cells, respectively.
+
+\begin{figure}[t]
+\centering
+\includesvg[width=\linewidth]{genus2_triangulation_morph_grid}
+\caption{Genus--2 triangulation morph.  The graph has 190 vertices, 527 edges,
+and 338 triangular faces.  The frames show the mean-value-coordinate morph from
+the all-one endpoint to the half-10 endpoint.}
+\label{fig:g2-triangulation-morph}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includesvg[width=\linewidth]{genus2_cells_morph_grid}
+\caption{Genus--2 cellular morph.  The graph has 190 vertices, 490 edges, 270
+triangles, 25 quadrilaterals, and 6 pentagons.  The displayed frames preserve
+geodesic convexity of all quadrilateral and pentagonal cells.}
+\label{fig:g2-cells-morph}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includesvg[width=\linewidth]{genus3_triangulation_morph_grid}
+\caption{Genus--3 triangulation morph on the Klein-quartic fundamental domain.
+The graph has 250 vertices, 677 edges, and 428 triangular faces.}
+\label{fig:g3-triangulation-morph}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includesvg[width=\linewidth]{genus3_cells_morph_grid}
+\caption{Genus--3 cellular morph.  The graph has 250 vertices, 557 edges, 208
+triangles, 80 quadrilaterals, and 20 pentagons.  As in the genus--2 cellular
+example, mean-value weights are computed from the completed quotient-surface
+vertex stars.}
+\label{fig:g3-cells-morph}
+\end{figure}
+
+Across all four examples, the generated frame sequence remained embedded in the
+Poincare disk: no frame had Poincare-geodesic edge crossings.  For the two
+cellular morphs, every displayed and generated frame also passed the
+tangent-angle convexity check on all quadrilateral and pentagonal faces.  These
+experiments indicate that the same endpoint-minimization and directed
+mean-value interpolation procedure applies both to triangulations and to
+cellular decompositions with convex higher-order faces, and works for both the
+genus--2 Bolza surface and the genus--3 Klein quartic examples.
+
+\end{document}
