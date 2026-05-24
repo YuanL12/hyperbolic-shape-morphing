@@ -127,7 +127,7 @@ After accepting the initial embedding, frames can be generated with:
 
 ```bash
 .venv/bin/python make_boundary_weight_morph_mean_value.py \
-  --base input/example_genus3_klein_quartic_embedded_irregular.json \
+  --source-embedding input/example_genus3_klein_quartic_embedded_irregular.json \
   --output-dir boundary_morph_genus3_klein_irregular_frames
 ```
 

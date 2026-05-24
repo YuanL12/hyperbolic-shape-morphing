@@ -36,6 +36,29 @@ MORPHS = [
     ),
 ]
 
+MORPHS_NORMALIZED_F = [
+    (
+        "genus2_triangulation_normalized_F",
+        "boundary_morph_genus2_bolza_triangulation_normalized_F_frames",
+        "Genus 2 triangulation, normalized F",
+    ),
+    (
+        "genus2_cells_normalized_F",
+        "boundary_morph_genus2_bolza_cells_normalized_F_frames",
+        "Genus 2 cells, normalized F",
+    ),
+    (
+        "genus3_triangulation_normalized_F",
+        "boundary_morph_genus3_triangulation_normalized_F_frames",
+        "Genus 3 triangulation, normalized F",
+    ),
+    (
+        "genus3_cells_normalized_F",
+        "boundary_morph_genus3_cells_normalized_F_frames",
+        "Genus 3 cells, normalized F",
+    ),
+]
+
 
 def load_frame(frame_dir: Path, frame_index: int) -> Dict[str, object]:
     path = frame_dir / f"frame_{frame_index:03d}.json"
@@ -165,13 +188,19 @@ def write_grid_svg(frame_dir: Path, output_svg: Path, title: str) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", default="output/paper_figures")
+    parser.add_argument(
+        "--variant",
+        choices=("mean-value", "normalized-F"),
+        default="mean-value",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     output_dir = Path(args.output_dir)
-    for name, frame_dir, title in MORPHS:
+    morphs = MORPHS_NORMALIZED_F if args.variant == "normalized-F" else MORPHS
+    for name, frame_dir, title in morphs:
         svg_path = output_dir / f"{name}_morph_grid.svg"
         write_grid_svg(Path(frame_dir), svg_path, title)
         print(f"wrote {svg_path}")

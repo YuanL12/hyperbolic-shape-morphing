@@ -165,28 +165,10 @@ colorlinks, citecolor=blue, linkcolor=blue, urlcolor=blue}
 \providecommand{\MorphFigurePath}{pictures}
 \svgpath{{\MorphFigurePath/}}
 
-\section{Experiments}
-\label{sec:experiments}
+\section{Methodology}
+\label{sec:methodology}
 
-We evaluate the proposed hyperbolic morphing procedure on four cut-open surface embeddings: a genus--2 triangulation, a genus--2 cellular graph with quadrilateral and pentagonal faces, a genus--3 triangulation, and a genus--3 cellular graph with quadrilateral and pentagonal faces. All embeddings are represented in the Poincaré disk. Side-pairing Möbius transformations encode the side identifications of the fundamental polygon. The genus--2 examples use a regular octagonal fundamental domain for the Bolza surface, while the genus--3 examples use a regular 14-gonal fundamental domain for the Klein quartic.
-
-The combinatorial sizes of the four test cases are listed in Table~\ref{tab:morph-topology-counts}. We omit the construction details of the initial planar graphs here; for the purposes of the morphing experiment, the important distinction is whether the input is a triangulation or a cellular decomposition with higher-order faces.
-
-\begin{table}[t]
-\centering
-\caption{Topology of the four morphing experiments.}
-\label{tab:morph-topology-counts}
-\begin{tabular}{lrrrrrr}
-\hline
-Example & Genus & Vertices & Edges & Triangles & Quads & Pentagons \\
-\hline
-Triangulation & 2 & 190 & 527 & 338 & 0 & 0 \\
-Cells & 2 & 190 & 490 & 270 & 25 & 6 \\
-Triangulation & 3 & 250 & 677 & 428 & 0 & 0 \\
-Cells & 3 & 250 & 557 & 208 & 80 & 20 \\
-\hline
-\end{tabular}
-\end{table}
+The input to the morphing algorithm is a graph $G=(V,E)$ together with two convex endpoint embeddings $Z^0$ and $Z^1$ in the Poincaré disk. Side-pairing Möbius transformations encode the side identifications of the cut-open fundamental polygon. The algorithm does not assume how the endpoint embeddings were produced; it uses them only to compute endpoint directed mean-value weights and then solves for intermediate embeddings.
 
 \paragraph{Notation and terminology.}
 The graph $G=(V,E)$ is combinatorial: it stores vertices, edges, and faces, but not the positions on the Poincaré disk. The position array $Z$ stores the positions of all vertices in the cut-open fundamental polygon. For vertices attached by Möbius transformations, we choose one copy as the representative vertex and call it the \emph{root}; the remaining attached copies are called \emph{slave} vertices. More explicitly, if $z_i^1$ is the root copy and $z_i^\ell$ is a slave copy, then the attaching map $M_\ell$ satisfies
@@ -195,12 +177,7 @@ z_i^\ell = M_\ell(z_i^1), \qquad \ell=2,\ldots,m_i .
 \]
 Thus root and slave copies are both stored in $Z$, but only the root is an independent position variable. An interior root has no slave copies ($m_i=1$). A boundary root may have one or more slave copies attached by Möbius transformations. A fixed root is a polygon corner whose position is held fixed. A free root is any non-fixed root, including ordinary interior roots and non-corner boundary roots. Below we use only the implementation terms root, slave, free root, fixed root, and interior root.
 
-\paragraph{Endpoint embeddings.}
-In applications, the endpoint embeddings may be prescribed. In these experiments, we instead construct synthetic endpoints in order to compare the four graph types under the same procedure.
-
-For each graph, we compute two endpoints by minimizing a hyperbolic Dirichlet energy. The source endpoint uses scalar edge weights $w_e \equiv 1$. The target endpoint uses a non-uniform scalar weight field in which the first half of the edge list has weight $10$, and the remaining half has weight $1$. Both endpoints are computed with the hyperbolic harmonic-map solver in the Poincaré disk, subject to the same fixed fundamental-domain corner vertices and the same side-pairing Möbius constraints.
-
-\paragraph{Gradient computation.}
+\paragraph{Hyperbolic maps and scalar energy.}
 We write a vertex position as a complex number $z_i \in \D$. The Poincaré disk metric is conformal to the Euclidean metric with factor
 \[
 \lambda_z = \frac{2}{1-|z|^2}.
@@ -223,33 +200,15 @@ with $\log_x(x)=0$, and
 \]
 with $\exp_x(0)=x$.
 
-For scalar endpoint weights, the energy is
-\[
+For scalar undirected edge weights, the hyperbolic Dirichlet energy is
+\begin{equation}
+\label{eq:scalar-hyperbolic-dirichlet-energy}
 E(z)=\frac12\sum_{\{i,j\}\in E} w_{ij}\,d_{\D}(z_i,z_j)^2.
-\]
+\end{equation}
 The Riemannian gradient contribution at the two endpoints of an edge is
 \[
 \nabla_{z_i}E_{\{i,j\}}=-w_{ij}\log_{z_i}(z_j), \qquad \nabla_{z_j}E_{\{i,j\}}=-w_{ij}\log_{z_j}(z_i).
 \]
-For directed mean-value weights, we use directed coefficients $\omega_{ij}$ and $\omega_{ji}$ in the gradient. With $d_{ij}=d_{\D}(z_i,z_j)$, the edge contribution is
-\begin{equation}
-\label{eq:directed-edge-gradient}
-\begin{aligned}
-\nabla_{z_i}E_{\{i,j\}} &= -\omega_{ij}\frac{\sinh d_{ij}}{d_{ij}}\log_{z_i}(z_j), \\
-\nabla_{z_j}E_{\{i,j\}} &= -\omega_{ji}\frac{\sinh d_{ij}}{d_{ij}}\log_{z_j}(z_i).
-\end{aligned}
-\end{equation}
-We use Eq.~\eqref{eq:directed-edge-gradient} in the gradient-accumulation algorithm below, with $\sinh d_{ij}/d_{ij}$ set to $1$ when $d_{ij}=0$.
-
-The factor $\sinh d_{ij}/d_{ij}$ is not part of the logarithm map and is not used for the scalar Dirichlet endpoint energy above. It appears when the directed mean-value solve is written using the cosh-distance edge energy $\omega_{ij}(\cosh d_{ij}-1)$. Since $d(\cosh x-1)/d x=\sinh x$ and
-\[
-\nabla_{z_i} d_{\D}(z_i,z_j) = -\frac{1}{d_{ij}}\log_{z_i}(z_j),
-\]
-the directed contribution becomes
-\[
-\nabla_{z_i}E_{\{i,j\}} = -\omega_{ij} \frac{\sinh d_{ij}}{d_{ij}} \log_{z_i}(z_j).
-\]
-Thus the factor comes from differentiating the cosh-distance energy. In contrast, the squared-distance Dirichlet energy gives simply $-w_{ij}\log_{z_i}(z_j)$. This distinction is useful for the mean-value weights because $(\sinh d_{ij}/d_{ij})\log_{z_i}(z_j)=\sinh d_{ij}u_{ij}$, where $u_{ij}$ is the unit tangent direction from $z_i$ to $z_j$.
 
 \paragraph{Gradient update.}
 The side-pairing constraint between a root and one of its slaves has the form
@@ -258,7 +217,7 @@ z_s=M_{s\leftarrow r}(z_r),
 \]
 where $r$ is the root and $s$ is the slave copy. The update of each free root is performed by the exponential map,
 \[
-z_i^{(m+1)} = \exp_{z_i^{(m)}}\left(-\eta\,\nabla_{z_i}E\right),
+z_i^{(m+1)} = \exp_{z_i^{(m)}}\left(-\eta\,G_i\right),
 \]
 while fixed roots remain fixed. An interior root is just a free root with no slaves, so its accumulated gradient is computed directly from its incident edges and then used in the exponential-map update. A boundary root first collects gradient contributions from its root copy and from its slave copies; the slave contributions are pulled back to the root before the same root update is applied. Slave copies are not independently updated; after each free root update, the corresponding slave entries in $Z$ are overwritten by their side-pairing Möbius images. Algorithm~\ref{alg:root-slave-gradient-accumulation} gives the update used in the implementation.
 
@@ -304,7 +263,7 @@ g_{r\leftarrow s} = (M^{-1})'(z_s)g_s = \frac{g_s}{(-\overline{b}z_s+a)^2}.
 \end{equation}
 If several slave copies attach to the same root, their pulled-back contributions are summed before the root update. Although $g_i^\ell$ is stored as a complex number, it represents a vector in $T_{z_i^\ell}\D$. Thus two equal complex numbers based at different copies are not the same tangent vector at the root until they are identified by the differential of the attaching Möbius map.
 
-\begin{algorithm}[H]
+\begin{algorithm}[htbp]
 \caption{Gradient accumulation and update at one root}
 \label{alg:root-slave-gradient-accumulation}
 \begin{algorithmic}[1]
@@ -334,7 +293,7 @@ If several slave copies attach to the same root, their pulled-back contributions
 \end{algorithm}
 
 \paragraph{Hyperbolic convexity check.}
-For the cellular examples, the higher-order faces must remain geodesically convex for mean-value coordinates to be well-defined. This is checked with tangent directions of Poincaré geodesics, not Euclidean chord angles. Let $p=(x_p,y_p)$ and $q=(x_q,y_q)$ be two adjacent vertices. If $x_p y_q-y_p x_q=0$, the geodesic is a Euclidean diameter and the tangent at $p$ toward $q$ is
+For cellular inputs, higher-order faces must be geodesically convex for mean-value coordinates to be well-defined. This is checked with tangent directions of Poincaré geodesics, not Euclidean chord angles. Let $p=(x_p,y_p)$ and $q=(x_q,y_q)$ be two adjacent vertices. If $x_p y_q-y_p x_q=0$, the geodesic is a Euclidean diameter and the tangent at $p$ toward $q$ is
 \[
 \tau_{p\to q} = \frac{q-p}{\|q-p\|}.
 \]
@@ -358,10 +317,10 @@ The signed turn at $v_k$ is the oriented angle from $a_k$ to $b_k$:
 \[
 \theta_k = \Arg\!\left( \left\langle a_k,b_k\right\rangle + \sqrt{-1}\,\det(a_k,b_k) \right)\in(-\pi,\pi].
 \]
-The face is accepted as geodesically convex when all $\theta_k$ have the sign of the face orientation. The minimized cellular endpoints used below passed this tangent-angle convexity test and had no Poincaré-geodesic edge crossings.
+The face is accepted as geodesically convex when all $\theta_k$ have the sign of the face orientation.
 
 \paragraph{Mean-value directed weights.}
-After computing the two endpoint convex embeddings, we discard the scalar endpoint weights and recompute directed mean-value edge weights. Around a center vertex $i$, all neighbors are first attached into the same local star using the side-pairing Möbius transformations.
+Given a convex endpoint embedding, we compute directed mean-value edge weights. Around a center vertex $i$, all neighbors are first attached into the same local star using the side-pairing Möbius transformations.
 
 The star is moved by a disk isometry sending $z_i$ to the origin. For a neighbor occurrence $j$, let
 \begin{equation}
@@ -371,11 +330,26 @@ u_j=\frac{z_j-z_i}{1-\overline{z_i}z_j} = r_j e^{\sqrt{-1}\phi_j}, \qquad \rho_j
 After sorting the neighbor occurrences by angle, let $\alpha_j^{-}$ and $\alpha_j^{+}$ be the adjacent angular gaps before and after occurrence $j$. The unnormalized hyperbolic mean-value directed weight is
 \begin{equation}
 \label{eq:directed-mean-value-weight}
-\omega_{ij} = \frac{ \tan(\alpha_j^{-}/2)+\tan(\alpha_j^{+}/2) }{ \sinh \rho_j }.
+\widetilde\omega_{ij} = \frac{ \tan(\alpha_j^{-}/2)+\tan(\alpha_j^{+}/2) }{ \sinh \rho_j }.
 \end{equation}
-When multiple attached occurrences have the same angular direction, the numerator is shared equally among them.
+When multiple attached occurrences have the same angular direction, the numerator is shared equally among them. We then normalize the outgoing weights at each center vertex,
+\[
+\omega_{ij}=\frac{\widetilde\omega_{ij}}{\sum_{k\sim i}\widetilde\omega_{ik}},
+\]
+so the directed coefficients satisfy $\sum_{j\sim i}\omega_{ij}=1$.
 
-\begin{algorithm}[H]
+For a fixed center vertex $i$, the normalized directed coefficients define the convex function
+\[
+F_i(y)=\frac12\sum_{j\sim i}\omega_{ij}\,d_{\D}(y,z_j)^2.
+\]
+The morphing solver drives each free root toward the critical point of these local functions. The contribution of neighbor $j$ to the gradient of $F_i$ at $z_i$ is
+\begin{equation}
+\label{eq:directed-edge-gradient}
+\nabla F_{i,j}(z_i) = -\omega_{ij}\log_{z_i}(z_j),
+\end{equation}
+and we use Eq.~\eqref{eq:directed-edge-gradient} in the gradient-accumulation algorithm below. 
+
+\begin{algorithm}[htbp]
 \caption{Directed mean-value weights on the attached local star}
 \label{alg:directed-mean-value-weights}
 \begin{algorithmic}[1]
@@ -388,9 +362,10 @@ When multiple attached occurrences have the same angular direction, the numerato
     \EndFor
     \State Sort by $\phi_j$ and compute the adjacent gaps $\alpha_j^{-},\alpha_j^{+}$
     \ForAll{attached neighbor occurrences $j$}
-        \State Set $\omega_{ij}$ by Eq.~\eqref{eq:directed-mean-value-weight}
+        \State Set $\widetilde\omega_{ij}$ by Eq.~\eqref{eq:directed-mean-value-weight}
         \State Split the numerator among coincident directions, if any
     \EndFor
+    \State Normalize outgoing weights: $\omega_{ij}\gets \widetilde\omega_{ij}/\sum_{k\sim i}\widetilde\omega_{ik}$
 \EndFor
 \State \Return all directed weights $\omega_{ij}$ and $\omega_{ji}$
 \end{algorithmic}
@@ -401,9 +376,9 @@ Let $\omega_{ij}^{0}$ denote the directed mean-value weight from vertex $i$ to v
 \[
 \omega_{ij}(t_k) = (1-t_k)\,\omega_{ij}^{0} + t_k\,\omega_{ij}^{1}.
 \]
-The scalar edge coefficient recorded for the frame energy is $a_{ij}(t_k)=(\omega_{ij}(t_k)+\omega_{ji}(t_k))/2$. Each frame is obtained by solving the hyperbolic harmonic-map equations with these interpolated directed weights. The solver state is the full position array $Z$, which contains both root and slave entries. During one solver sweep, Algorithm~\ref{alg:root-slave-gradient-accumulation} is applied to every root. For an interior root, the algorithm sees only the root copy. For a boundary root, it also sees the attached slave copies. For a fixed root, the accumulated gradient is computed but ignored by the update step. After each root update, the corresponding slave entries in $Z$ are overwritten by the attaching maps. The endpoint arrays and every stored frame are assumed to satisfy these attaching constraints. The previous frame is used as the initial iterate for the next frame.
+The scalar edge coefficient recorded for diagnostics is $a_{ij}(t_k)=(\omega_{ij}(t_k)+\omega_{ji}(t_k))/2$. Each frame is obtained by minimizing the normalized squared-distance functions with these interpolated directed weights. The solver state is the full position array $Z$, which contains both root and slave entries. During one solver sweep, Algorithm~\ref{alg:root-slave-gradient-accumulation} is applied to every root. For an interior root, the algorithm sees only the root copy. For a boundary root, it also sees the attached slave copies. For a fixed root, the accumulated gradient is computed but ignored by the update step. After each root update, the corresponding slave entries in $Z$ are overwritten by the attaching maps. The endpoint arrays and every stored frame are assumed to satisfy these attaching constraints. The previous frame is used as the initial iterate for the next frame.
 
-\begin{algorithm}[H]
+\begin{algorithm}[htbp]
 \caption{Mean-value-coordinate morphing}
 \label{alg:mean-value-morph}
 \begin{algorithmic}[1]
@@ -433,36 +408,162 @@ The scalar edge coefficient recorded for the frame energy is $a_{ij}(t_k)=(\omeg
 \end{algorithmic}
 \end{algorithm}
 
-All four morphs were generated with 25 frames. The figures below show the evenly spaced frame indices $[0,3,6,9,12,15,18,21,24]$. Green curves are graph edges, the dashed black curve is the fundamental-domain boundary, red vertices are fixed polygon corners, and orange and green faces indicate quadrilateral and pentagonal cells, respectively.
+\section{Experiments}
+\label{sec:experiments}
+
+We evaluate the proposed hyperbolic morphing procedure on four cut-open surface embeddings: a genus--2 triangulation, a genus--2 cellular graph with quadrilateral and pentagonal faces, a genus--3 triangulation, and a genus--3 cellular graph with quadrilateral and pentagonal faces. All embeddings are represented in the Poincaré disk. Side-pairing Möbius transformations encode the side identifications of the fundamental polygon. The genus--2 examples use a regular octagonal fundamental domain for the Bolza surface, while the genus--3 examples use a regular 14-gonal fundamental domain for the Klein quartic.
+
+The combinatorial sizes of the four test cases are listed in Table~\ref{tab:morph-topology-counts}. We omit the construction details of the initial planar graphs here; for the purposes of the morphing experiment, the important distinction is whether the input is a triangulation or a cellular decomposition with higher-order faces.
+
+\begin{table}[t]
+\centering
+\caption{Topology of the four morphing experiments.}
+\label{tab:morph-topology-counts}
+\begin{tabular}{lrrrrrr}
+\hline
+Example & Genus & Vertices & Edges & Triangles & Quads & Pentagons \\
+\hline
+Triangulation & 2 & 190 & 527 & 338 & 0 & 0 \\
+Cells & 2 & 190 & 490 & 270 & 25 & 6 \\
+Triangulation & 3 & 250 & 677 & 428 & 0 & 0 \\
+Cells & 3 & 250 & 557 & 208 & 80 & 20 \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Endpoint generation.}
+In applications, the endpoint embeddings may be prescribed. In these experiments, we instead construct synthetic convex endpoints in order to compare the four graph types under the same procedure.
+
+For each graph, we compute two endpoints by minimizing the scalar hyperbolic Dirichlet energy in Eq.~\eqref{eq:scalar-hyperbolic-dirichlet-energy}. The source endpoint uses scalar edge weights $w_e \equiv 1$. The target endpoint uses a non-uniform scalar weight field in which the first half of the edge list has weight $10$, and the remaining half has weight $1$. Both endpoints are computed with the hyperbolic harmonic-map solver in the Poincaré disk, subject to the same fixed fundamental-domain corner vertices and the same side-pairing Möbius constraints. After computing these endpoints, the scalar weights are discarded; the morphing algorithm uses the endpoint embeddings only through their normalized directed mean-value weights.
+
+The minimized cellular endpoints passed the tangent-angle convexity test in Section~\ref{sec:methodology} and had no Poincaré-geodesic edge crossings.
+
+All four morphs were generated with 25 frames using normalized directed mean-value weights and the squared-distance functions $F_i$. The figures below show the evenly spaced frame indices $[0,3,6,9,12,15,18,21,24]$. Green curves are graph edges, the dashed black curve is the fundamental-domain boundary, red vertices are fixed polygon corners, and orange and green faces indicate quadrilateral and pentagonal cells, respectively.
 
 \begin{figure}[t]
 \centering
-\includesvg[width=\linewidth]{genus2_triangulation_morph_grid}
-\caption{Genus--2 triangulation morph. The graph has 190 vertices, 527 edges, and 338 triangular faces. The frames show the mean-value-coordinate morph from the unit-weight endpoint to the non-uniform endpoint.}
+\includesvg[width=\linewidth]{genus2_triangulation_normalized_F_morph_grid}
+\caption{Genus--2 triangulation morph. The graph has 190 vertices, 527 edges, and 338 triangular faces. The frames show the normalized mean-value-coordinate morph from the unit-weight endpoint to the non-uniform endpoint.}
 \label{fig:g2-triangulation-morph}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includesvg[width=\linewidth]{genus2_cells_morph_grid}
-\caption{Genus--2 cellular morph. The graph has 190 vertices, 490 edges, 270 triangles, 25 quadrilaterals, and 6 pentagons. The displayed frames preserve geodesic convexity for all quadrilateral and pentagonal cells.}
+\includesvg[width=\linewidth]{genus2_cells_normalized_F_morph_grid}
+\caption{Genus--2 cellular morph. The graph has 190 vertices, 490 edges, 270 triangles, 25 quadrilaterals, and 6 pentagons. The displayed normalized mean-value frames preserve geodesic convexity for all quadrilateral and pentagonal cells.}
 \label{fig:g2-cells-morph}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includesvg[width=\linewidth]{genus3_triangulation_morph_grid}
-\caption{Genus--3 triangulation morph on the Klein quartic fundamental domain. The graph has 250 vertices, 677 edges, and 428 triangular faces. The frames show the mean-value-coordinate morph from the unit-weight endpoint to the non-uniform endpoint.}
+\includesvg[width=\linewidth]{genus3_triangulation_normalized_F_morph_grid}
+\caption{Genus--3 triangulation morph on the Klein quartic fundamental domain. The graph has 250 vertices, 677 edges, and 428 triangular faces. The frames show the normalized mean-value-coordinate morph from the unit-weight endpoint to the non-uniform endpoint.}
 \label{fig:g3-triangulation-morph}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includesvg[width=\linewidth]{genus3_cells_morph_grid}
-\caption{Genus--3 cellular morph. The graph has 250 vertices, 557 edges, 208 triangles, 80 quadrilaterals, and 20 pentagons. As in the genus--2 cellular example, mean-value weights are computed from the completed attached local stars, and the displayed frames preserve geodesic convexity for all higher-order cells.}
+\includesvg[width=\linewidth]{genus3_cells_normalized_F_morph_grid}
+\caption{Genus--3 cellular morph. The graph has 250 vertices, 557 edges, 208 triangles, 80 quadrilaterals, and 20 pentagons. As in the genus--2 cellular example, normalized mean-value weights are computed from the completed attached local stars, and the displayed frames preserve geodesic convexity for all higher-order cells.}
 \label{fig:g3-cells-morph}
 \end{figure}
 
-Across all four examples, every generated frame remained embedded in the Poincaré disk. No frame contained crossing Poincaré geodesic edges. For the two cellular morphs, every displayed and generated frame also passed the tangent-angle convexity check on all quadrilateral and pentagonal faces. These experiments indicate that the same endpoint minimization and directed mean-value interpolation procedure applies to triangulations and to cellular decompositions with convex higher-order faces, on both the genus--2 Bolza surface and the genus--3 Klein quartic example.
+Across all four examples, every generated frame remained embedded in the Poincaré disk. No frame contained crossing Poincaré geodesic edges. For the two cellular morphs, every displayed and generated frame also passed the tangent-angle convexity check on all quadrilateral and pentagonal faces. These experiments indicate that the same endpoint generation and normalized directed mean-value interpolation procedure applies to triangulations and to cellular decompositions with convex higher-order faces, on both the genus--2 Bolza surface and the genus--3 Klein quartic example.
+
+
+% \subsection{Hyperbolic mean value coordinates}
+
+% Hyperbolic mean value coordinates are the analogue of classical mean value
+% coordinates in the Euclidean plane. They provide smooth barycentric coordinates
+% for points inside a geodesically convex polygon in the hyperbolic plane and are
+% particularly useful for interpolation, mesh deformation, and graph morphing on
+% surfaces of genus $g \geq 2$.
+
+% Let $P=(v_1,\dots,v_n)$ be a geodesically convex polygon in the hyperbolic plane
+% $\mathbb{H}^2$, and let $x$ be a point in the interior of $P$. Denote by
+% $d_i=d_{\mathbb{H}}(x,v_i)$ the hyperbolic distance from $x$ to the vertex
+% $v_i$. Let $\alpha_i$ be the angle at $x$ between the geodesic segments
+% $[x,v_i]$ and $[x,v_{i+1}]$, where indices are taken modulo $n$. Define the
+% unnormalized weights
+% \[
+% w_i(x)
+% =
+% \frac{
+% \tan(\alpha_{i-1}/2)+\tan(\alpha_i/2)
+% }{
+% \sinh d_i
+% }.
+% \]
+% The hyperbolic mean value coordinates are then given by
+% \[
+% \lambda_i(x)
+% =
+% \frac{w_i(x)}{\sum_{j=1}^n w_j(x)}.
+% \]
+
+% These coordinates satisfy the following properties:
+% \begin{enumerate}
+%     \item \textbf{Partition of unity:}
+%     \[
+%     \sum_{i=1}^n \lambda_i(x)=1.
+%     \]
+
+%     \item \textbf{Nonnegativity:}
+%     \[
+%     \lambda_i(x)\geq 0
+%     \qquad \text{for all } i.
+%     \]
+
+%     \item \textbf{Interpolation:}
+%     If $x=v_k$, then $\lambda_k(x)=1$ and
+%     $\lambda_i(x)=0$ for $i\neq k$.
+
+%     \item \textbf{Smoothness:}
+%     Each $\lambda_i$ is smooth in the interior of the polygon.
+
+%     \item \textbf{Isometry invariance:}
+%     The coordinates are preserved under hyperbolic isometries.
+% \end{enumerate}
+
+% An equivalent formulation is obtained by mapping the polygon to the
+% Poincar\'e disk model. If $x$ is moved to the origin by a M\"obius
+% transformation, then the hyperbolic angles $\alpha_i$ coincide with Euclidean
+% angles at the origin, and the weights become
+% \[
+% w_i
+% =
+% \frac{
+% \tan(\alpha_{i-1}/2)+\tan(\alpha_i/2)
+% }{
+% 2\tanh(d_i/2)
+% }.
+% \]
+% Since
+% \[
+% 2\tanh(d_i/2)
+% =
+% \frac{2|z_i|}{1+|z_i|^2},
+% \]
+% where $z_i$ is the Euclidean coordinate of $v_i$ in the disk, the weights can
+% be evaluated efficiently using only Euclidean quantities.
+
+% The coordinates can also be characterized variationally. The point $x$ is the
+% unique minimizer of the strictly convex function
+% \[
+% F(y)
+% =
+% \sum_{i=1}^n \lambda_i(x)\, d_{\mathbb{H}}(y,v_i)^2.
+% \]
+% Thus $x$ is the hyperbolic barycenter of the vertices with weights
+% $\lambda_i(x)$.
+
+% In practical computations, hyperbolic mean value coordinates are used to extend
+% boundary deformations to the interior of a mesh. If the boundary vertices are
+% moved to new positions $v_i'$, then each interior point $x$ is mapped to the
+% hyperbolic barycenter of the points $v_i'$ with the same coordinates
+% $\lambda_i(x)$. This construction yields smooth and visually natural
+% deformations while preserving the intrinsic geometry of the underlying
+% hyperbolic surface.
+
 
 \end{document}

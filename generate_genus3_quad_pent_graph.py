@@ -262,7 +262,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="input/example_genus3_klein_quartic_quad_pent_graph.json",
+        default="input/example_genus3_klein_quartic_convex_quad_pent_graph.json",
     )
     parser.add_argument(
         "--preview-svg",

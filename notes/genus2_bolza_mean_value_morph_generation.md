@@ -73,7 +73,7 @@ python3 poincare_harmonic_map.py \
 Half-10 endpoint input:
 
 ```bash
-python3 -c 'import json; p="input/example_genus2_bolza_delaunay_irregular.json"; q="input/example_genus2_bolza_delaunay_half_10.json"; data=json.load(open(p)); n=len(data["edges"]); data["edge_weights"]=[10.0 if i<n//2 else 1.0 for i in range(n)]; data["directed_edge_weights"]=[[w,w] for w in data["edge_weights"]]; data["directed_edge_weight_operator"]="energy"; data["name"]="genus2_bolza_delaunay_half_10"; data["description"]="Genus-2 Bolza Delaunay topology with half edge weights 10 and half edge weights 1."; data.setdefault("metadata",{})["endpoint_weight_pattern"]="first half 10, second half 1"; json.dump(data, open(q,"w"), indent=2); open(q,"a").write("\n")'
+python3 -c 'import json; p="input/example_genus2_bolza_delaunay_irregular.json"; q="input/example_genus2_bolza_delaunay_half_10.json"; data=json.load(open(p)); n=len(data["edges"]); data["edge_weights"]=[10.0 if i<n//2 else 1.0 for i in range(n)]; data["directed_edge_weights"]=[[w,w] for w in data["edge_weights"]]; data["name"]="genus2_bolza_delaunay_half_10"; data["description"]="Genus-2 Bolza Delaunay topology with half edge weights 10 and half edge weights 1."; data.setdefault("metadata",{})["endpoint_weight_pattern"]="first half 10, second half 1"; json.dump(data, open(q,"w"), indent=2); open(q,"a").write("\n")'
 ```
 
 Half-10 endpoint:
@@ -139,7 +139,7 @@ python3 poincare_harmonic_map.py \
 Half-10 endpoint input:
 
 ```bash
-python3 -c 'import json; p="input/example_genus2_bolza_convex_quad_pent_graph.json"; q="input/example_genus2_bolza_convex_quad_pent_graph_half_10.json"; data=json.load(open(p)); n=len(data["edges"]); data["edge_weights"]=[10.0 if i<n//2 else 1.0 for i in range(n)]; data["directed_edge_weights"]=[[w,w] for w in data["edge_weights"]]; data["directed_edge_weight_operator"]="energy"; data["name"]="genus2_bolza_convex_quad_pent_graph_half_10"; data.setdefault("metadata",{})["endpoint_weight_pattern"]="first half 10, second half 1"; json.dump(data, open(q,"w"), indent=2); open(q,"a").write("\n")'
+python3 -c 'import json; p="input/example_genus2_bolza_convex_quad_pent_graph.json"; q="input/example_genus2_bolza_convex_quad_pent_graph_half_10.json"; data=json.load(open(p)); n=len(data["edges"]); data["edge_weights"]=[10.0 if i<n//2 else 1.0 for i in range(n)]; data["directed_edge_weights"]=[[w,w] for w in data["edge_weights"]]; data["name"]="genus2_bolza_convex_quad_pent_graph_half_10"; data.setdefault("metadata",{})["endpoint_weight_pattern"]="first half 10, second half 1"; json.dump(data, open(q,"w"), indent=2); open(q,"a").write("\n")'
 ```
 
 Half-10 endpoint:
@@ -167,14 +167,13 @@ Triangulation morph:
 
 ```bash
 python3 make_boundary_weight_morph_mean_value.py \
-  --base input/example_genus2_bolza_delaunay_all_1_solution.json \
+  --source-embedding input/example_genus2_bolza_delaunay_all_1_solution.json \
   --target-embedding input/example_genus2_bolza_delaunay_half_10_solution.json \
   --output-dir boundary_morph_genus2_bolza_triangulation_mean_value_all1_to_half10_frames \
   --frames 25 \
   --start-directed-weights mean_value \
-  --target-directed-weights mean_value_from_target \
+  --target-directed-weights mean_value \
   --normalization unnormalized \
-  --directed-edge-weight-operator mean_value \
   --iterations 3000 \
   --step-size 0.001 \
   --tolerance 1e-8 \
@@ -187,14 +186,13 @@ Cell morph:
 
 ```bash
 python3 make_boundary_weight_morph_mean_value.py \
-  --base input/example_genus2_bolza_convex_quad_pent_graph_all_1_solution.json \
+  --source-embedding input/example_genus2_bolza_convex_quad_pent_graph_all_1_solution.json \
   --target-embedding input/example_genus2_bolza_convex_quad_pent_graph_half_10_solution.json \
   --output-dir boundary_morph_genus2_bolza_cells_mean_value_all1_to_half10_frames \
   --frames 25 \
   --start-directed-weights mean_value \
-  --target-directed-weights mean_value_from_target \
+  --target-directed-weights mean_value \
   --normalization unnormalized \
-  --directed-edge-weight-operator mean_value \
   --iterations 3000 \
   --step-size 0.001 \
   --tolerance 1e-8 \

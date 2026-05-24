@@ -52,9 +52,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--frames", type=int, default=25)
     parser.add_argument(
-        "--base",
-        default="input/example_genus2_boundary_vertices_embedded_1_20.json",
-        help="Base unweighted mesh JSON used for vertices, faces/edges, constraints, and fixed vertices.",
+        "--source-embedding",
+        default="input/example_genus2_bolza_delaunay_all_1_solution.json",
+        help=(
+            "Source embedding JSON used for frame 0 vertices, graph topology, "
+            "constraints, and fixed vertices."
+        ),
     )
     parser.add_argument(
         "--output-dir",
@@ -64,8 +67,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--normalization",
         choices=("unnormalized", "normalized"),
-        default="unnormalized",
-        help="Mean-value directed weights used for w0.",
+        default="normalized",
+        help="Mean-value directed weight normalization.",
     )
     parser.add_argument(
         "--low-valence-star-policy",
@@ -78,12 +81,6 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--directed-edge-weight-operator",
-        choices=("mean_value", "energy"),
-        default="mean_value",
-        help="Operator used by poincare_harmonic_map.py for directed weights.",
-    )
-    parser.add_argument(
         "--start-directed-weights",
         choices=("mean_value", "ones"),
         default="mean_value",
@@ -91,20 +88,25 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--target-directed-weights",
-        choices=("ones", "half_10", "half_oriented_10", "mean_value_from_target"),
+        choices=(
+            "ones",
+            "half_10",
+            "half_oriented_10",
+            "mean_value",
+        ),
         default="ones",
         help=(
             "Directed weights used at the last frame. 'half_10' sets half the "
             "edges to (10, 10), half to (1, 1). 'half_oriented_10' sets half "
-            "to (10, 1), half to (1, 10). 'mean_value_from_target' computes "
-            "mean-value directed weights from --target-embedding."
+            "to (10, 1), half to (1, 10). 'mean_value' computes mean-value "
+            "directed weights from --target-embedding."
         ),
     )
     parser.add_argument(
         "--target-embedding",
         help=(
             "Embedding JSON used when --target-directed-weights is "
-            "'mean_value_from_target'. Topology is taken from --base."
+            "'mean_value'. Topology is taken from --source-embedding."
         ),
     )
     parser.add_argument("--iterations", type=int, default=2200)
@@ -116,7 +118,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Line-search objective passed to the solver. Defaults to the "
-            "solver's operator-dependent choice."
+            "solver's standard choice."
         ),
     )
     parser.add_argument(
@@ -128,7 +130,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-embedding-check",
         action="store_true",
-        help="Skip validation that base vertices/faces form an embedding.",
+        help="Skip validation that source vertices/faces form an embedding.",
     )
     parser.add_argument(
         "--skip-face-orientation-check",
@@ -142,9 +144,9 @@ def make_target_directed_weights(
     mode: str,
     edge_count: int,
 ) -> List[DirectedWeight]:
-    if mode == "mean_value_from_target":
+    if mode == "mean_value":
         raise ValueError(
-            "mean_value_from_target requires --target-embedding and is handled "
+            "mean_value requires --target-embedding and is handled "
             "in main()."
         )
     if mode == "ones":
@@ -282,15 +284,15 @@ def main() -> None:
     if frame_count < 2:
         raise ValueError("--frames must be at least 2")
 
-    base = load_json(args.base)
+    source_embedding = load_json(args.source_embedding)
     if not args.skip_embedding_check:
-        check_data = dict(base)
+        check_data = dict(source_embedding)
         if args.skip_face_orientation_check:
             check_data.pop("faces", None)
         embedding_report = validate_disk_embedding(check_data)
         if not embedding_report["is_embedding"]:
             raise ValueError(
-                "Base input is not a valid disk embedding: "
+                "Source embedding is not a valid disk embedding: "
                 f"{embedding_report}"
             )
         print(
@@ -300,20 +302,20 @@ def main() -> None:
             "crossings=0"
         )
 
-    initial_vertices = [list(v) for v in base["vertices"]]
+    initial_vertices = [list(v) for v in source_embedding["vertices"]]
     edges = [
         list(edge) for edge in build_edges(
-            faces=base.get("faces"),
-            edges=base.get("edges"),
+            faces=source_embedding.get("faces"),
+            edges=source_embedding.get("edges"),
             n_vertices=len(initial_vertices),
         )
     ]
 
-    start_data = dict(base)
+    start_data = dict(source_embedding)
     start_data["vertices"] = initial_vertices
     start_data["edges"] = edges
-    start_data["constraints"] = base.get("constraints", [])
-    start_data["fixed"] = base.get("fixed", [])
+    start_data["constraints"] = source_embedding.get("constraints", [])
+    start_data["fixed"] = source_embedding.get("fixed", [])
     weight_start_data = with_corner_attachment_constraints(start_data)
 
     if args.start_directed_weights == "mean_value":
@@ -326,22 +328,25 @@ def main() -> None:
     else:
         start_directed_weights = [(1.0, 1.0)] * len(edges)
 
-    if args.target_directed_weights == "mean_value_from_target":
+    target_directed_weight_mode = args.target_directed_weights
+
+    if target_directed_weight_mode == "mean_value":
         if not args.target_embedding:
             raise ValueError(
                 "--target-embedding is required when --target-directed-weights "
-                "is mean_value_from_target."
+                "is mean_value."
             )
         target_embedding = load_json(args.target_embedding)
         if len(target_embedding.get("vertices", [])) != len(initial_vertices):
             raise ValueError(
-                "--target-embedding must have the same number of vertices as --base."
+                "--target-embedding must have the same number of vertices as "
+                "--source-embedding."
             )
-        target_data = dict(base)
+        target_data = dict(source_embedding)
         target_data["vertices"] = [list(v) for v in target_embedding["vertices"]]
         target_data["edges"] = edges
-        target_data["constraints"] = base.get("constraints", [])
-        target_data["fixed"] = base.get("fixed", [])
+        target_data["constraints"] = source_embedding.get("constraints", [])
+        target_data["fixed"] = source_embedding.get("fixed", [])
         weight_target_data = with_corner_attachment_constraints(target_data)
         target_calculator = DirectedEdgeWeightCalculator(
             weight_target_data,
@@ -351,7 +356,7 @@ def main() -> None:
         target_directed_weights = target_calculator.compute()
     else:
         target_directed_weights = make_target_directed_weights(
-            args.target_directed_weights,
+            target_directed_weight_mode,
             len(start_directed_weights),
         )
 
@@ -370,16 +375,15 @@ def main() -> None:
         )
         current_edge_weights = average_edge_weights(current_directed_weights)
 
-        data = dict(base)
+        data = dict(source_embedding)
         data["vertices"] = prev_vertices
         data["edges"] = edges
         data["edge_weights"] = current_edge_weights
         data["directed_edge_weights"] = [
             [weight_i, weight_j] for weight_i, weight_j in current_directed_weights
         ]
-        data["directed_edge_weight_operator"] = args.directed_edge_weight_operator
-        data["constraints"] = base.get("constraints", [])
-        data["fixed"] = base.get("fixed", [])
+        data["constraints"] = source_embedding.get("constraints", [])
+        data["fixed"] = source_embedding.get("fixed", [])
         data["iterations"] = args.iterations
         data["step_size"] = args.step_size
         data["tolerance"] = args.tolerance
@@ -393,25 +397,23 @@ def main() -> None:
         result["morph_t"] = t
         result["edge_weights"] = current_edge_weights
         result["directed_edge_weights"] = data["directed_edge_weights"]
-        result["directed_edge_weight_operator"] = args.directed_edge_weight_operator
         result["line_search_objective"] = data.get("line_search_objective")
         result["convergence_criterion"] = data.get("convergence_criterion")
-        if "faces" in base:
-            result["faces"] = base["faces"]
-        result["constraints"] = base.get("constraints", [])
-        result["fixed"] = base.get("fixed", [])
+        if "faces" in source_embedding:
+            result["faces"] = source_embedding["faces"]
+        result["constraints"] = source_embedding.get("constraints", [])
+        result["fixed"] = source_embedding.get("fixed", [])
         result["metadata"] = {
             "morph_direction": (
                 f"{args.start_directed_weights}_directed_to_"
-                f"{args.target_directed_weights}"
+                f"{target_directed_weight_mode}"
             ),
-            "directed_edge_weight_operator": args.directed_edge_weight_operator,
-            "initial_base_input": args.base,
+            "source_embedding": args.source_embedding,
             "start_weight_normalization": args.normalization,
             "low_valence_star_policy": args.low_valence_star_policy,
             "attach_corner_stars": True,
             "start_directed_weights": args.start_directed_weights,
-            "target_directed_weights": args.target_directed_weights,
+            "target_directed_weights": target_directed_weight_mode,
             "target_embedding": args.target_embedding,
             "start_min_directed_weight": min(
                 min(weight_i, weight_j) for weight_i, weight_j in start_directed_weights
