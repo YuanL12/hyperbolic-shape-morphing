@@ -2,6 +2,7 @@ __pycache__/
 
 *.json
 *.html
+tmp/
 
 experiment_section_mean_value_morphs.*
 *.svg

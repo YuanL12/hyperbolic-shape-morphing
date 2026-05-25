@@ -155,14 +155,37 @@ argument and writes a self-contained HTML viewer to `--output`.
   --output morph_viewer_genus3_cells_normalized_F.html
 ```
 
-## Endpoint and Initial Embedding Generation
+## Generate Inputs From Code
 
-The endpoint generation details are recorded in:
+The four morph commands above use endpoint solution files in `input/`. A fresh
+clone can regenerate those files from code. More detailed notes are recorded in:
 
 - `notes/genus2_bolza_mean_value_morph_generation.md`
 - `notes/genus3_mean_value_morph_generation.md`
 
-The four graph embeddings used by the morphs are:
+The four graph embeddings used by the morphs are generated first:
+
+```bash
+.venv/bin/python generate_genus2_bolza_embedding.py
+
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus2_bolza_delaunay_irregular.json \
+  --output input/example_genus2_bolza_delaunay_all_1_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
+
+.venv/bin/python generate_genus2_quad_pent_graph.py \
+  --quads 25 \
+  --pentagons 6 \
+  --seed-limit 700
+
+.venv/bin/python generate_genus3_klein_embedding.py
+
+.venv/bin/python generate_genus3_quad_pent_graph.py
+```
+
+These commands write:
 
 ```text
 input/example_genus2_bolza_delaunay_irregular.json
@@ -171,31 +194,80 @@ input/example_genus3_klein_quartic_embedded_irregular.json
 input/example_genus3_klein_quartic_convex_quad_pent_graph.json
 ```
 
-The genus-2 triangulation and cell graph can be regenerated with:
+For each graph, solve the all-one endpoint:
 
 ```bash
-.venv/bin/python generate_genus2_bolza_embedding.py
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus2_bolza_convex_quad_pent_graph.json \
+  --output input/example_genus2_bolza_convex_quad_pent_graph_all_1_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
 
-.venv/bin/python generate_genus2_quad_pent_graph.py \
-  --quads 25 \
-  --pentagons 6 \
-  --seed-limit 700
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus3_klein_quartic_embedded_irregular.json \
+  --output input/example_genus3_klein_quartic_triangulation_all_1_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
+
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus3_klein_quartic_convex_quad_pent_graph.json \
+  --output input/example_genus3_klein_quartic_convex_quad_pent_graph_all_1_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
 ```
 
-The genus-3 triangulation and cell graph can be regenerated with:
+Then create the half-10 endpoint inputs and solve them:
 
 ```bash
-.venv/bin/python generate_genus3_klein_embedding.py
+.venv/bin/python make_half10_endpoint_input.py \
+  input/example_genus2_bolza_delaunay_irregular.json \
+  --output input/example_genus2_bolza_delaunay_half_10.json
 
-.venv/bin/python generate_genus3_quad_pent_graph.py
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus2_bolza_delaunay_half_10.json \
+  --output input/example_genus2_bolza_delaunay_half_10_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
+
+.venv/bin/python make_half10_endpoint_input.py \
+  input/example_genus2_bolza_convex_quad_pent_graph.json \
+  --output input/example_genus2_bolza_convex_quad_pent_graph_half_10.json
+
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus2_bolza_convex_quad_pent_graph_half_10.json \
+  --output input/example_genus2_bolza_convex_quad_pent_graph_half_10_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
+
+.venv/bin/python make_half10_endpoint_input.py \
+  input/example_genus3_klein_quartic_embedded_irregular.json \
+  --output input/example_genus3_klein_quartic_triangulation_half_10.json
+
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus3_klein_quartic_triangulation_half_10.json \
+  --output input/example_genus3_klein_quartic_triangulation_half_10_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
+
+.venv/bin/python make_half10_endpoint_input.py \
+  input/example_genus3_klein_quartic_convex_quad_pent_graph.json \
+  --output input/example_genus3_klein_quartic_convex_quad_pent_graph_half_10.json
+
+.venv/bin/python poincare_harmonic_map.py \
+  input/example_genus3_klein_quartic_convex_quad_pent_graph_half_10.json \
+  --output input/example_genus3_klein_quartic_convex_quad_pent_graph_half_10_solution.json \
+  --iterations 8000 \
+  --step-size 0.006 \
+  --tolerance 1e-9
 ```
 
-For each graph, the all-one endpoint is produced by running
-`poincare_harmonic_map.py` on the graph JSON. The half-10 endpoint is produced
-by writing a second problem JSON with the first half of `edge_weights` set to
-`10`, the second half set to `1`, and then running `poincare_harmonic_map.py`
-on that weighted JSON. The detailed commands and output filenames are listed in
-the two notes above.
+After these endpoint files exist, run the four morph-viewer commands above.
 
 ## Paper Figures
 
