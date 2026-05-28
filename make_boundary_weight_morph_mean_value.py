@@ -65,10 +65,9 @@ def parse_args() -> argparse.Namespace:
         help="Directory for per-frame JSON outputs.",
     )
     parser.add_argument(
-        "--normalization",
-        choices=("unnormalized", "normalized"),
-        default="normalized",
-        help="Mean-value directed weight normalization.",
+        "--unnormalized",
+        action="store_true",
+        help="Use unnormalized directed mean-value weights.",
     )
     parser.add_argument(
         "--low-valence-star-policy",
@@ -137,7 +136,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="For non-triangle/coarsened maps, validate edge crossings only.",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--display-fixed-from-source",
+        action="store_true",
+        help=(
+            "Copy source metadata.display_fixed/display_fixed into each frame. "
+            "This keeps the original corner drawing markers when solver fixed "
+            "vertices have been relaxed in a copied input."
+        ),
+    )
+    args = parser.parse_args()
+    args.normalization = "unnormalized" if args.unnormalized else "normalized"
+    return args
 
 
 def make_target_directed_weights(
@@ -187,11 +197,14 @@ def with_corner_attachment_constraints(data: Dict[str, object]) -> Dict[str, obj
             return data
 
     side_steps = int(side_subdivisions) + 1
-    side_count = (
-        len(side_labels)
-        if isinstance(side_labels, list)
-        else len(data.get("fixed", []))
-    )
+    boundary_vertex_count = metadata.get("boundary_vertex_count")
+    if isinstance(side_labels, list):
+        side_count = len(side_labels)
+    elif boundary_vertex_count is not None:
+        side_count = int(boundary_vertex_count) // side_steps
+    else:
+        display_fixed = data.get("display_fixed", metadata.get("display_fixed"))
+        side_count = len(display_fixed if isinstance(display_fixed, list) else data.get("fixed", []))
     if side_count == 0:
         return data
     boundary_count = side_count * side_steps
@@ -303,6 +316,20 @@ def main() -> None:
         )
 
     initial_vertices = [list(v) for v in source_embedding["vertices"]]
+    source_metadata = source_embedding.get("metadata", {})
+    if not isinstance(source_metadata, dict):
+        source_metadata = {}
+    display_fixed = source_embedding.get("display_fixed", source_metadata.get("display_fixed"))
+    if not isinstance(display_fixed, list):
+        display_fixed = source_embedding.get("fixed", [])
+    display_fixed_vertices = source_embedding.get(
+        "display_fixed_vertices",
+        source_metadata.get("display_fixed_vertices"),
+    )
+    if not isinstance(display_fixed_vertices, list):
+        display_fixed_vertices = [
+            list(source_embedding["vertices"][int(idx)]) for idx in display_fixed
+        ]
     edges = [
         list(edge) for edge in build_edges(
             faces=source_embedding.get("faces"),
@@ -403,6 +430,9 @@ def main() -> None:
             result["faces"] = source_embedding["faces"]
         result["constraints"] = source_embedding.get("constraints", [])
         result["fixed"] = source_embedding.get("fixed", [])
+        if args.display_fixed_from_source:
+            result["display_fixed"] = display_fixed
+            result["display_fixed_vertices"] = display_fixed_vertices
         result["metadata"] = {
             "morph_direction": (
                 f"{args.start_directed_weights}_directed_to_"
@@ -412,6 +442,17 @@ def main() -> None:
             "start_weight_normalization": args.normalization,
             "low_valence_star_policy": args.low_valence_star_policy,
             "attach_corner_stars": True,
+            "display_fixed_from_source": args.display_fixed_from_source,
+            "relaxed_corner_vertex": source_metadata.get("relaxed_corner_vertex"),
+            "relaxed_corner_position": source_metadata.get("relaxed_corner_position"),
+            "relaxed_corner_vertices": source_metadata.get("relaxed_corner_vertices"),
+            "relaxed_corner_positions": source_metadata.get("relaxed_corner_positions"),
+            "relaxed_corner_component_vertices": source_metadata.get(
+                "relaxed_corner_component_vertices"
+            ),
+            "relaxed_corner_constraint_count": source_metadata.get(
+                "relaxed_corner_constraint_count"
+            ),
             "start_directed_weights": args.start_directed_weights,
             "target_directed_weights": target_directed_weight_mode,
             "target_embedding": args.target_embedding,
