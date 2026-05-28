@@ -31,12 +31,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "input_dir",
         nargs="?",
-        default="boundary_morph_1_100_frames",
+        default="output/frames/morph_frames",
         help="Directory containing frame_*.json files.",
     )
     parser.add_argument(
         "--output",
-        default="morph_viewer.html",
+        default="output_html/morph_viewer.html",
         help="Output HTML path.",
     )
     return parser.parse_args()
@@ -58,6 +58,7 @@ def main() -> None:
                 "edges": frame["edges"],
                 "edge_weights": frame.get("edge_weights", []),
                 "fixed": frame.get("fixed", []),
+                "reference_fundamental_domain": frame["reference_fundamental_domain"],
                 "energy": frame.get("energy"),
                 "morph_t": frame.get("morph_t"),
             }
@@ -206,25 +207,23 @@ function geodesicPoints(a, b) {{
   return points;
 }}
 
-function drawFundamentalDomain(vertices, fixed) {{
-  if (!fixed || fixed.length < 3) {{
+function drawFundamentalDomain(domainVertices) {{
+  if (!domainVertices || domainVertices.length < 3) {{
     return;
   }}
 
   ctx.save();
-  ctx.setLineDash([8, 7]);
+  ctx.setLineDash([]);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.strokeStyle = "#000000";
-  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.62;
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 1.2;
 
-  for (let k = 0; k < fixed.length; k++) {{
-    const i = fixed[k];
-    const j = fixed[(k + 1) % fixed.length];
-    if (!vertices[i] || !vertices[j]) {{
-      continue;
-    }}
-    const points = geodesicPoints(vertices[i], vertices[j]).map(project);
+  for (let k = 0; k < domainVertices.length; k++) {{
+    const a = domainVertices[k];
+    const b = domainVertices[(k + 1) % domainVertices.length];
+    const points = geodesicPoints(a, b).map(project);
     ctx.beginPath();
     ctx.moveTo(points[0][0], points[0][1]);
     for (let p = 1; p < points.length; p++) {{
@@ -240,8 +239,12 @@ function draw(index) {{
   const frame = frames[index];
   const vertices = frame.vertices;
   const edges = frame.edges;
-  const fixedList = frame.fixed || [];
-  const fixed = new Set(fixedList);
+  const referenceDomain = frame.reference_fundamental_domain || {{}};
+  const referenceCornerIndices = referenceDomain.corner_indices || [];
+  const domainVertices = referenceDomain.vertices || [];
+  const boundaryCount = referenceCornerIndices.length >= 2
+    ? referenceCornerIndices.length * (referenceCornerIndices[1] - referenceCornerIndices[0])
+    : 0;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -253,15 +256,18 @@ function draw(index) {{
   ctx.fillStyle = "#fbfcfd";
   ctx.fill();
   ctx.strokeStyle = "#1f2937";
-  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.8;
+  ctx.lineWidth = 1.2;
   ctx.stroke();
+  ctx.globalAlpha = 1;
 
-  drawFundamentalDomain(vertices, fixedList);
+  drawFundamentalDomain(domainVertices);
 
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = "#138a2e";
-  ctx.lineWidth = 1.7;
+  ctx.globalAlpha = 0.85;
+  ctx.lineWidth = 1.5;
   for (let e = 0; e < edges.length; e++) {{
     const [i, j] = edges[e];
     const points = geodesicPoints(vertices[i], vertices[j]).map(project);
@@ -272,12 +278,13 @@ function draw(index) {{
     }}
     ctx.stroke();
   }}
+  ctx.globalAlpha = 1;
 
   for (let i = 0; i < vertices.length; i++) {{
     const p = project(vertices[i]);
     ctx.beginPath();
-    ctx.arc(p[0], p[1], fixed.has(i) ? 4.2 : 2.2, 0, Math.PI * 2);
-    ctx.fillStyle = fixed.has(i) ? "#0f766e" : "#111827";
+    ctx.arc(p[0], p[1], 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = i < boundaryCount ? "#dc2626" : "#111827";
     ctx.fill();
   }}
 
@@ -311,6 +318,7 @@ draw(0);
 </body>
 </html>
 """
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(html, encoding="utf-8")
     print(f"Wrote {output} with {len(frames)} frame(s)")
 

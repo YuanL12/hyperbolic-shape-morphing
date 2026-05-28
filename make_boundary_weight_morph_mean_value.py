@@ -61,7 +61,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-dir",
-        default="morph_frames",
+        default="output/frames/morph_frames",
         help="Directory for per-frame JSON outputs.",
     )
     parser.add_argument(
@@ -137,12 +137,12 @@ def parse_args() -> argparse.Namespace:
         help="For non-triangle/coarsened maps, validate edge crossings only.",
     )
     parser.add_argument(
-        "--display-fixed-from-source",
+        "--reference-fundamental-domain",
         action="store_true",
         help=(
-            "Copy source metadata.display_fixed/display_fixed into each frame. "
-            "This keeps the original corner drawing markers when solver fixed "
-            "vertices have been relaxed in a copied input."
+            "Copy the source reference_fundamental_domain into each frame. "
+            "This keeps the reference fundamental polygon fixed in drawings "
+            "when solver corner constraints have been relaxed."
         ),
     )
     args = parser.parse_args()
@@ -176,6 +176,41 @@ def make_target_directed_weights(
     raise ValueError(f"Unknown target directed-weight mode: {mode!r}")
 
 
+def infer_reference_domain_name(corner_count: int) -> Tuple[str, str, str]:
+    if corner_count == 8:
+        return ("bolza_regular_octagon", "Bolza surface", "regular octagon")
+    if corner_count == 14:
+        return ("klein_quartic_regular_14_gon", "Klein quartic surface", "regular 14-gon")
+    return ("reference_fundamental_polygon", "unknown surface", f"{corner_count}-gon")
+
+
+def reference_fundamental_domain_from(data: Dict[str, object]) -> Dict[str, object]:
+    existing = data.get("reference_fundamental_domain")
+    if isinstance(existing, dict):
+        return existing
+
+    corner_indices = data.get("fixed", [])
+    if not isinstance(corner_indices, list):
+        corner_indices = []
+    corner_indices = [int(idx) for idx in corner_indices]
+
+    domain_vertices = [list(data["vertices"][idx]) for idx in corner_indices]
+
+    name, surface, polygon = infer_reference_domain_name(len(corner_indices))
+    return {
+        "name": name,
+        "surface": surface,
+        "polygon": polygon,
+        "model": "poincare_disk",
+        "corner_indices": corner_indices,
+        "vertices": domain_vertices,
+        "description": (
+            "Drawing-only reference fundamental polygon. These coordinates do "
+            "not constrain the moving graph embedding."
+        ),
+    }
+
+
 def with_corner_attachment_constraints(data: Dict[str, object]) -> Dict[str, object]:
     metadata = data.get("metadata", {})
     if not isinstance(metadata, dict):
@@ -203,8 +238,17 @@ def with_corner_attachment_constraints(data: Dict[str, object]) -> Dict[str, obj
     elif boundary_vertex_count is not None:
         side_count = int(boundary_vertex_count) // side_steps
     else:
-        display_fixed = data.get("display_fixed", metadata.get("display_fixed"))
-        side_count = len(display_fixed if isinstance(display_fixed, list) else data.get("fixed", []))
+        reference_domain = data.get("reference_fundamental_domain")
+        reference_indices = (
+            reference_domain.get("corner_indices", [])
+            if isinstance(reference_domain, dict)
+            else []
+        )
+        side_count = len(
+            reference_indices
+            if isinstance(reference_indices, list) and reference_indices
+            else data.get("fixed", [])
+        )
     if side_count == 0:
         return data
     boundary_count = side_count * side_steps
@@ -319,17 +363,7 @@ def main() -> None:
     source_metadata = source_embedding.get("metadata", {})
     if not isinstance(source_metadata, dict):
         source_metadata = {}
-    display_fixed = source_embedding.get("display_fixed", source_metadata.get("display_fixed"))
-    if not isinstance(display_fixed, list):
-        display_fixed = source_embedding.get("fixed", [])
-    display_fixed_vertices = source_embedding.get(
-        "display_fixed_vertices",
-        source_metadata.get("display_fixed_vertices"),
-    )
-    if not isinstance(display_fixed_vertices, list):
-        display_fixed_vertices = [
-            list(source_embedding["vertices"][int(idx)]) for idx in display_fixed
-        ]
+    reference_fundamental_domain = reference_fundamental_domain_from(source_embedding)
     edges = [
         list(edge) for edge in build_edges(
             faces=source_embedding.get("faces"),
@@ -389,7 +423,7 @@ def main() -> None:
 
     # create the output directory
     out_dir = Path(args.output_dir)
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     prev_vertices = initial_vertices
 
@@ -430,9 +464,8 @@ def main() -> None:
             result["faces"] = source_embedding["faces"]
         result["constraints"] = source_embedding.get("constraints", [])
         result["fixed"] = source_embedding.get("fixed", [])
-        if args.display_fixed_from_source:
-            result["display_fixed"] = display_fixed
-            result["display_fixed_vertices"] = display_fixed_vertices
+        if args.reference_fundamental_domain:
+            result["reference_fundamental_domain"] = reference_fundamental_domain
         result["metadata"] = {
             "morph_direction": (
                 f"{args.start_directed_weights}_directed_to_"
@@ -442,7 +475,7 @@ def main() -> None:
             "start_weight_normalization": args.normalization,
             "low_valence_star_policy": args.low_valence_star_policy,
             "attach_corner_stars": True,
-            "display_fixed_from_source": args.display_fixed_from_source,
+            "reference_fundamental_domain": args.reference_fundamental_domain,
             "relaxed_corner_vertex": source_metadata.get("relaxed_corner_vertex"),
             "relaxed_corner_position": source_metadata.get("relaxed_corner_position"),
             "relaxed_corner_vertices": source_metadata.get("relaxed_corner_vertices"),

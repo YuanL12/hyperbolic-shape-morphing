@@ -5,6 +5,10 @@ Tutte Embedding works for nonsymmetric weights on non-triangulation(just planar 
 
 
 ## Current Experiment
+We consider 
+- genus 2: regular octagonal fundamental polygon for the Bolza surface
+- genus 3: regular 14-gonal fundamental polygon for the Klein quartic surface
+
 
 The current experiment produces four mean-value morph viewers:
 
@@ -69,7 +73,7 @@ argument and writes a self-contained HTML viewer to `--output`.
 .venv/bin/python make_boundary_weight_morph_mean_value.py \
   --source-embedding input/example_genus2_bolza_delaunay_all_1_solution.json \
   --target-embedding input/example_genus2_bolza_delaunay_half_10_solution.json \
-  --output-dir boundary_morph_genus2_bolza_triangulation_mean_value_fixed_corner_frames \
+  --output-dir output/frames/boundary_morph_genus2_bolza_triangulation_mean_value_fixed_corner_frames \
   --frames 25 \
   --start-directed-weights mean_value \
   --target-directed-weights mean_value \
@@ -78,11 +82,12 @@ argument and writes a self-contained HTML viewer to `--output`.
   --tolerance 1e-8 \
   --line-search-objective none \
   --convergence-criterion relative_step \
-  --skip-face-orientation-check
+  --skip-face-orientation-check \
+  --reference-fundamental-domain
 
 .venv/bin/python visualize_morph_frames.py \
-  boundary_morph_genus2_bolza_triangulation_mean_value_fixed_corner_frames \
-  --output morph_viewer_genus2_bolza_triangulation_mean_value_fixed_corner.html
+  output/frames/boundary_morph_genus2_bolza_triangulation_mean_value_fixed_corner_frames \
+  --output output_html/morph_viewer_genus2_bolza_triangulation_mean_value_fixed_corner.html
 ```
 
 ### Genus-2 Cells
@@ -91,7 +96,7 @@ argument and writes a self-contained HTML viewer to `--output`.
 .venv/bin/python make_boundary_weight_morph_mean_value.py \
   --source-embedding input/example_genus2_bolza_convex_quad_pent_graph_all_1_solution.json \
   --target-embedding input/example_genus2_bolza_convex_quad_pent_graph_half_10_solution.json \
-  --output-dir boundary_morph_genus2_bolza_cells_mean_value_fixed_corner_frames \
+  --output-dir output/frames/boundary_morph_genus2_bolza_cells_mean_value_fixed_corner_frames \
   --frames 25 \
   --start-directed-weights mean_value \
   --target-directed-weights mean_value \
@@ -100,11 +105,12 @@ argument and writes a self-contained HTML viewer to `--output`.
   --tolerance 1e-8 \
   --line-search-objective none \
   --convergence-criterion relative_step \
-  --skip-face-orientation-check
+  --skip-face-orientation-check \
+  --reference-fundamental-domain
 
 .venv/bin/python visualize_morph_frames.py \
-  boundary_morph_genus2_bolza_cells_mean_value_fixed_corner_frames \
-  --output morph_viewer_genus2_bolza_cells_mean_value_fixed_corner.html
+  output/frames/boundary_morph_genus2_bolza_cells_mean_value_fixed_corner_frames \
+  --output output_html/morph_viewer_genus2_bolza_cells_mean_value_fixed_corner.html
 ```
 
 ### Genus-3 Triangulation
@@ -113,7 +119,7 @@ argument and writes a self-contained HTML viewer to `--output`.
 .venv/bin/python make_boundary_weight_morph_mean_value.py \
   --source-embedding input/example_genus3_klein_quartic_triangulation_all_1_solution.json \
   --target-embedding input/example_genus3_klein_quartic_triangulation_half_10_solution.json \
-  --output-dir boundary_morph_genus3_triangulation_mean_value_fixed_corner_frames \
+  --output-dir output/frames/boundary_morph_genus3_triangulation_mean_value_fixed_corner_frames \
   --frames 25 \
   --start-directed-weights mean_value \
   --target-directed-weights mean_value \
@@ -122,11 +128,12 @@ argument and writes a self-contained HTML viewer to `--output`.
   --tolerance 1e-8 \
   --line-search-objective none \
   --convergence-criterion relative_step \
-  --skip-face-orientation-check
+  --skip-face-orientation-check \
+  --reference-fundamental-domain
 
 .venv/bin/python visualize_morph_frames.py \
-  boundary_morph_genus3_triangulation_mean_value_fixed_corner_frames \
-  --output morph_viewer_genus3_triangulation_mean_value_fixed_corner.html
+  output/frames/boundary_morph_genus3_triangulation_mean_value_fixed_corner_frames \
+  --output output_html/morph_viewer_genus3_triangulation_mean_value_fixed_corner.html
 ```
 
 ### Genus-3 Cells
@@ -135,7 +142,7 @@ argument and writes a self-contained HTML viewer to `--output`.
 .venv/bin/python make_boundary_weight_morph_mean_value.py \
   --source-embedding input/example_genus3_klein_quartic_convex_quad_pent_graph_all_1_solution.json \
   --target-embedding input/example_genus3_klein_quartic_convex_quad_pent_graph_half_10_solution.json \
-  --output-dir boundary_morph_genus3_cells_mean_value_fixed_corner_frames \
+  --output-dir output/frames/boundary_morph_genus3_cells_mean_value_fixed_corner_frames \
   --frames 25 \
   --start-directed-weights mean_value \
   --target-directed-weights mean_value \
@@ -144,11 +151,12 @@ argument and writes a self-contained HTML viewer to `--output`.
   --tolerance 1e-8 \
   --line-search-objective none \
   --convergence-criterion relative_step \
-  --skip-face-orientation-check
+  --skip-face-orientation-check \
+  --reference-fundamental-domain
 
 .venv/bin/python visualize_morph_frames.py \
-  boundary_morph_genus3_cells_mean_value_fixed_corner_frames \
-  --output morph_viewer_genus3_cells_mean_value_fixed_corner.html
+  output/frames/boundary_morph_genus3_cells_mean_value_fixed_corner_frames \
+  --output output_html/morph_viewer_genus3_cells_mean_value_fixed_corner.html
 ```
 
 ## Generate Inputs From Code
@@ -267,17 +275,14 @@ After these endpoint files exist, run the four morph-viewer commands above.
 
 ## Paper Figures
 
-After the four frame directories exist, regenerate the SVG grids used by the
+After the four frame directories exist, regenerate the PDF grids used by the
 Overleaf paper with:
 
 ```bash
 .venv/bin/python generate_morph_paper_figures.py \
   --variant mean-value-fixed_corner \
-  --output-dir paper/overleaf/pictures
+  --output-dir paper/shape-morphing-overleaf/pictures
 ```
-
-The `paper/overleaf/pictures` directory is reserved for SVG files included by
-the current paper source.
 
 ## Relax Corner Orbits
 
@@ -295,20 +300,25 @@ orbit in genus 2 and both Klein-quartic corner orbits in genus 3.
 The copied endpoint files remove the selected corner orbit(s) from `fixed` and
 add the corresponding corner Mobius constraints, so the selected corners are
 free and their paired/slave corner copies follow by transformation. The original
-corner list and coordinates are preserved in `display_fixed` and
-`display_fixed_vertices`, so the black Poincare disk and solid black
-fundamental-domain outline stay fixed while only the green graph embedding
-moves.
+reference polygon is preserved in `reference_fundamental_domain`, a drawing-only
+JSON object with `corner_indices` and `vertices`. Thus `fixed` means solver-fixed
+vertices only, while `reference_fundamental_domain` controls the fixed black
+fundamental polygon used as visual context.
+
+Here "fundamental domain" means the cut-open polygon in the Poincare disk. The
+genus-2 examples use a regular octagonal fundamental polygon for the Bolza
+surface. The genus-3 examples use a regular 14-gonal fundamental polygon for the
+Klein quartic surface; the Klein quartic is the surface, not the polygon itself.
 
 Then rerun the four morph commands with the copied inputs, suffixed output
-directories, and `--display-fixed-from-source`. For example, the genus-3 cell
+directories, and `--reference-fundamental-domain`. For example, the genus-3 cell
 variant is:
 
 ```bash
 .venv/bin/python make_boundary_weight_morph_mean_value.py \
   --source-embedding input/example_genus3_klein_quartic_convex_quad_pent_graph_all_1_relaxed_corner_orbits_solution.json \
   --target-embedding input/example_genus3_klein_quartic_convex_quad_pent_graph_half_10_relaxed_corner_orbits_solution.json \
-  --output-dir boundary_morph_genus3_cells_mean_value_relaxed_corner_frames \
+  --output-dir output/frames/boundary_morph_genus3_cells_mean_value_relaxed_corner_frames \
   --frames 25 \
   --start-directed-weights mean_value \
   --target-directed-weights mean_value \
@@ -318,18 +328,18 @@ variant is:
   --line-search-objective none \
   --convergence-criterion relative_step \
   --skip-face-orientation-check \
-  --display-fixed-from-source
+  --reference-fundamental-domain
 
 .venv/bin/python visualize_morph_frames.py \
-  boundary_morph_genus3_cells_mean_value_relaxed_corner_frames \
-  --output morph_viewer_genus3_cells_mean_value_relaxed_corner.html
+  output/frames/boundary_morph_genus3_cells_mean_value_relaxed_corner_frames \
+  --output output_html/morph_viewer_genus3_cells_mean_value_relaxed_corner.html
 ```
 
-The SVG grids for all four relaxed-corner-orbit frame directories can be regenerated
+The PDF grids for all four relaxed-corner-orbit frame directories can be regenerated
 with:
 
 ```bash
 .venv/bin/python generate_morph_paper_figures.py \
   --variant mean-value-relaxed_corner \
-  --output-dir paper/overleaf/pictures
+  --output-dir paper/shape-morphing-overleaf/pictures
 ```
