@@ -1,5 +1,30 @@
 # Graph Morphing Problem on Hyperbolic Surface
 
+You can generate your hyperbolic kaleidoscope: morphing a genus-2 triangulation in the Poincare disk with smooth sin(8θ) edge weights, turning discrete geometry into black-and-white motion art.
+
+## Sin(8θ) Kaleidoscope Videos
+
+These videos show the same 50-frame morph rendered with tile depths `0`, `1`,
+and `2`.
+
+### Tile Depth 0
+
+<video src="output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth0.mp4" controls width="480"></video>
+
+[Open depth 0 MP4](output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth0.mp4)
+
+### Tile Depth 1
+
+<video src="output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth1.mp4" controls width="480"></video>
+
+[Open depth 1 MP4](output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth1.mp4)
+
+### Tile Depth 2
+
+<video src="output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth2.mp4" controls width="480"></video>
+
+[Open depth 2 MP4](output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth2.mp4)
+
 ## Theorem
 Tutte Embedding works for nonsymmetric weights on non-triangulation(just planar graph). 
 

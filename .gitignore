@@ -7,6 +7,8 @@ tmp/
 experiment_section_mean_value_morphs.*
 *.svg
 *.pdf
+*.png
 
 # ignore paper directory
 /paper
+.DS_Store

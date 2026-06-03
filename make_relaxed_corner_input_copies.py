@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Copy endpoint inputs while relaxing selected fixed-corner orbits.
 
-The copied files keep the original corner list in display_fixed for drawing,
-but remove the selected corner orbit(s) from fixed so the harmonic-map solver
-can move them.
+The copied files keep a drawing-only reference_fundamental_domain, but remove
+the selected corner orbit(s) from fixed so the harmonic-map solver can move
+them.
 """
 
 from __future__ import annotations
@@ -13,7 +13,10 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
-from make_boundary_weight_morph_mean_value import with_corner_attachment_constraints
+from make_boundary_weight_morph_mean_value import (
+    reference_fundamental_domain_from,
+    with_corner_attachment_constraints,
+)
 
 
 DEFAULT_ENDPOINTS = [
@@ -44,14 +47,14 @@ def relaxed_copy(
     if not isinstance(fixed, list) or not fixed:
         raise ValueError("Input has no fixed corner list.")
 
-    display_fixed: List[int] = [int(idx) for idx in fixed]
+    reference_corner_indices: List[int] = [int(idx) for idx in fixed]
     for corner_position in corner_positions:
-        if corner_position < 0 or corner_position >= len(display_fixed):
+        if corner_position < 0 or corner_position >= len(reference_corner_indices):
             raise ValueError(
-                f"--corner-positions values must be in [0, {len(display_fixed) - 1}] "
+                f"--corner-positions values must be in [0, {len(reference_corner_indices) - 1}] "
                 "for this input."
             )
-    relaxed_vertices = [display_fixed[position] for position in corner_positions]
+    relaxed_vertices = [reference_corner_indices[position] for position in corner_positions]
 
     with_corners = with_corner_attachment_constraints(data)
     base_constraints = list(data.get("constraints", []))
@@ -74,32 +77,27 @@ def relaxed_copy(
         if int(constraint["slave"]) in component_vertices
         and int(constraint["master"]) in component_vertices
     ]
-    solver_fixed = [idx for idx in display_fixed if idx not in component_vertices]
+    solver_fixed = [idx for idx in reference_corner_indices if idx not in component_vertices]
 
     out = dict(data)
     out["fixed"] = solver_fixed
     out["constraints"] = base_constraints + component_constraints
-    out["display_fixed"] = display_fixed
-    out["display_fixed_vertices"] = [
-        list(data["vertices"][idx]) for idx in display_fixed
-    ]
+    out["reference_fundamental_domain"] = reference_fundamental_domain_from(data)
 
     metadata = dict(out.get("metadata", {})) if isinstance(out.get("metadata"), dict) else {}
     metadata.update(
         {
-            "display_fixed": display_fixed,
             "relaxed_corner_vertex": relaxed_vertices[0],
             "relaxed_corner_position": corner_positions[0],
             "relaxed_corner_vertices": relaxed_vertices,
             "relaxed_corner_positions": corner_positions,
             "relaxed_corner_component_vertices": sorted(component_vertices),
             "relaxed_corner_constraint_count": len(component_constraints),
-            "display_fixed_vertices": out["display_fixed_vertices"],
             "relaxed_corner_note": (
                 "This is a copied endpoint with the selected corner orbit "
                 "removed from fixed and tied by corner Mobius constraints; "
-                "display_fixed/display_fixed_vertices preserve the original "
-                "fundamental-domain drawing."
+                "reference_fundamental_domain preserves the original "
+                "drawing-only fundamental polygon."
             ),
         }
     )
