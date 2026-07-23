@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Z0 to Z1 Mean-Value Checkerboard Morph</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Avenir, Helvetica, Arial, sans-serif;
+      background: #f8fafc;
+      color: #172033;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    header,
+    footer {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-color: #d9dee8;
+    }
+    header {
+      border-bottom: 1px solid #d9dee8;
+    }
+    footer {
+      border-top: 1px solid #d9dee8;
+    }
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+    main {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      overflow: hidden;
+    }
+    img {
+      width: min(88vmin, 980px);
+      height: min(88vmin, 980px);
+      object-fit: contain;
+      display: block;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 1px solid #aeb7c7;
+      background: #ffffff;
+      color: #172033;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button.active {
+      background: #172033;
+      color: #ffffff;
+      border-color: #172033;
+    }
+    input[type="range"] {
+      width: min(42vw, 420px);
+    }
+    .readout {
+      min-width: 120px;
+      font-variant-numeric: tabular-nums;
+      color: #46556d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Z0 to Z1 mean-value checkerboard morph</h1>
+    <div class="controls" aria-label="Depth controls">
+      <button class="depth active" data-depth="0">Depth 0</button>
+      <button class="depth" data-depth="1">Depth 1</button>
+      <button class="depth" data-depth="2">Depth 2</button>
+    </div>
+  </header>
+  <main>
+    <img id="frame" alt="checkerboard morph frame" src="../output/checkerboard_morph/Z0_to_Z1_mean_value/depth0/frame_000.svg">
+  </main>
+  <footer>
+    <div class="controls">
+      <button id="play">Play</button>
+      <input id="slider" type="range" min="0" max="24" step="1" value="0">
+      <span class="readout" id="readout">depth 0 · frame 000 · t=0.000</span>
+    </div>
+  </footer>
+  <script>
+    const frame = document.getElementById("frame");
+    const slider = document.getElementById("slider");
+    const readout = document.getElementById("readout");
+    const play = document.getElementById("play");
+    const depthButtons = Array.from(document.querySelectorAll(".depth"));
+    let depth = 0;
+    let timer = null;
+
+    function frameName(index) {
+      return String(index).padStart(3, "0");
+    }
+
+    function update() {
+      const index = Number(slider.value);
+      const name = frameName(index);
+      frame.src = `../output/checkerboard_morph/Z0_to_Z1_mean_value/depth${depth}/frame_${name}.svg`;
+      readout.textContent = `depth ${depth} · frame ${name} · t=${(index / 24).toFixed(3)}`;
+    }
+
+    function stop() {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+      play.textContent = "Play";
+    }
+
+    slider.addEventListener("input", update);
+    play.addEventListener("click", () => {
+      if (timer !== null) {
+        stop();
+        return;
+      }
+      play.textContent = "Pause";
+      timer = setInterval(() => {
+        const next = (Number(slider.value) + 1) % 25;
+        slider.value = String(next);
+        update();
+      }, 120);
+    });
+    depthButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        depth = Number(button.dataset.depth);
+        depthButtons.forEach((item) => item.classList.toggle("active", item === button));
+        update();
+      });
+    });
+    update();
+  </script>
+</body>
+</html>

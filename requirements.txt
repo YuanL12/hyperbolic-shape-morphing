@@ -1,3 +1,0 @@
-# Generated from the current .venv.
-# No third-party Python packages are installed; the project uses the Python
-# standard library.

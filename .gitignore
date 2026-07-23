@@ -1,7 +1,11 @@
 __pycache__/
+.venv/
+dist/
 
 *.json
 *.html
+!examples/output_html/
+!examples/output_html/*.html
 tmp/
 
 experiment_section_mean_value_morphs.*
@@ -12,3 +16,5 @@ experiment_section_mean_value_morphs.*
 # ignore paper directory
 /paper
 .DS_Store
+*.mp4
+*.md

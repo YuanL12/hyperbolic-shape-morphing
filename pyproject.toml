@@ -1,0 +1,17 @@
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "hyper-morph"
+version = "0.1.0"
+description = "Hyperbolic graph morphing in the Poincaré disk"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = []
+
+[project.scripts]
+hyper-morph = "hyper_morph.morph:main"
+hyper-morph-solve = "hyper_morph.solver:main"
+hyper-morph-weights = "hyper_morph.weights:main"
