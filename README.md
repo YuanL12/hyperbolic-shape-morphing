@@ -78,3 +78,16 @@ will install the package into the current environment so that you can use `impor
 
 See the [quick start](quick_start.md) for the input schema, complete commands,
 arguments, and Python examples.
+
+## Citation
+```bibtex
+@misc{luo2026morphinggraphshyperbolicsurfaces,
+      title={Morphing Graphs on Hyperbolic Surfaces}, 
+      author={Yanwen Luo and Yuan Luo},
+      year={2026},
+      eprint={2607.21469},
+      archivePrefix={arXiv},
+      primaryClass={math.GT},
+      url={https://arxiv.org/abs/2607.21469}, 
+}
+```
