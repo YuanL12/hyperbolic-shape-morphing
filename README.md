@@ -12,6 +12,7 @@ The same 50-frame genus-2 morph is shown at three tiling depths.
 | --- | --- | --- |
 | ![Morph at tile depth 0](examples/output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth0.gif) | ![Morph at tile depth 1](examples/output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth1.gif) | ![Morph at tile depth 2](examples/output/checkerboard_morph/Z0_to_Z1_sin8_1_50_ring_alternating/sin8_ring_alternating_depth2.gif) |
 
+[Our morphing gallery](https://yuanl12.github.io/hyperbolic-shape-morphing/) provides more interactive examples with relaxed boundary vertices and general cellular embeddings (not just triangles).
 
 ## Installation
 We use uv to manage the environment and dependencies. 
