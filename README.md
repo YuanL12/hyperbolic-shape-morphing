@@ -23,6 +23,7 @@ uv sync
 will install the package into the current environment so that you can use `import hyper_morph` in your code.
 
 ## Method summary
+![Workflow](assets/workflow.png)
 
 1. Load compatible source and target embeddings.
 
